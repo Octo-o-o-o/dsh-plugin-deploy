@@ -70,6 +70,9 @@ That's it. **No account required the first time** — the plugin uses a Cloudfla
 > [!NOTE]
 > Requires [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0 locally (the version that supports temporary previews). If it is missing, the plugin tells you how to install it instead of failing silently.
 
+> [!TIP]
+> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.1.1`.
+
 ---
 
 ## Capability 1 — Deploy a project to Cloudflare
