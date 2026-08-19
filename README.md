@@ -11,6 +11,7 @@
   <a href="https://deepseek-harness.github.io/deepseek-harness/"><img alt="harness" src="https://img.shields.io/badge/harness-0.1.0--rc.7-4c1?logo=deepseek" /></a>
   <img alt="tests" src="https://img.shields.io/badge/tests-106%20passed-brightgreen" />
   <img alt="tracks" src="https://img.shields.io/badge/track-Host%20%2B%20Web%20UI-8957e5" />
+  <a href="https://dsh.pub/en/plugins/?q=Octo-o-o-o%2Fdsh-plugin-deploy"><img alt="dsh.pub" src="https://dsh.pub/api/badges/Octo-o-o-o/dsh-plugin-deploy.svg" /></a>
 </p>
 
 <p align="center">
