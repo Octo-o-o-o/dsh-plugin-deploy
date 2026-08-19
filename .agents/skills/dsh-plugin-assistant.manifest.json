@@ -1,0 +1,68 @@
+{
+  "name": "dsh-plugin-assistant",
+  "version": "0.1.0",
+  "description": "Skill registry for the DeepSeek Harness plugin-development rule pack (assembler: contract + generated facts + edit-time scanner).",
+  "source_of_truth": ".agents/skills/",
+  "harness_pin": "docs/reference/pin.json",
+  "skills": [
+    {
+      "name": "dsh-plugin-dev",
+      "path": "dsh-plugin-dev/SKILL.md",
+      "category": "routing",
+      "criticality": "high",
+      "triggers": [
+        "在独立仓库写 / 打包 / 安装 / 发布 dsh 插件（Host 工具、服务、事件监听、LLM adapter）",
+        "安装与激活：--dump-config、装了不激活、declares no dsh.bundle",
+        "export default 丢 inject、Config 报 schema、waterfall 短路"
+      ],
+      "primary_doc": "https://deepseek-harness.github.io/deepseek-harness/en/develop/basic/",
+      "references": [
+        "docs/reference/contract-anchors.md",
+        "docs/reference/events.md",
+        "docs/reference/cli.md",
+        "docs/reference/npm-dist-tags.md"
+      ]
+    },
+    {
+      "name": "dsh-plugin-client",
+      "path": "dsh-plugin-client/SKILL.md",
+      "category": "web-ui",
+      "criticality": "high",
+      "triggers": [
+        "给 dsh Web UI 加界面：slot、设置卡片、侧栏 / 输入区 / 会话节点 / 工具视图",
+        "src/client/、lib/client.js、dsh.client、exports ./client、__ModuleLoader__",
+        "loaded without registering / slot 未声明加载失败 / 设置页不显示"
+      ],
+      "primary_doc": "https://deepseek-harness.github.io/deepseek-harness/en/reference/cookbook/adding-a-settings-card",
+      "references": [
+        "docs/reference/slots.md",
+        "docs/reference/client-externals.md",
+        "docs/reference/client-manifest.md",
+        "docs/reference/settings-namespaces.md"
+      ]
+    }
+  ],
+  "fanout_targets": {
+    "claude_code": ".claude/skills/ (mirror of .agents/skills via tools/sync-skills.sh)",
+    "codex": "AGENTS.md + .agents/skills/",
+    "grok": "AGENTS.md（Grok Build CLI 读仓根 AGENTS.md）"
+  },
+  "guardrails": {
+    "post_edit_hook": "tools/hooks/post-edit.sh",
+    "scanner": "tools/hooks/lib/scan-dsh-plugin.sh",
+    "rule_ids": [
+      "DSH-HOST-001",
+      "DSH-HOST-002",
+      "DSH-HOST-003",
+      "DSH-PKG-001",
+      "DSH-PKG-002",
+      "DSH-PKG-003",
+      "DSH-PKG-004",
+      "DSH-CLIENT-001",
+      "DSH-CLIENT-002",
+      "DSH-CLIENT-003",
+      "DSH-CLI-001",
+      "DSH-SEC-001"
+    ]
+  }
+}

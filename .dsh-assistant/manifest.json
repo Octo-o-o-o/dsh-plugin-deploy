@@ -1,0 +1,9 @@
+{
+  "assistant": "dsh-plugin-assistant",
+  "assistantVersion": "0.1.0",
+  "source": "~/WorkSpace/DshPluginAssistant",
+  "installedAt": "2026-08-17T16:45:34Z",
+  "harness": { "version": "0.1.0-rc.7", "commit": "99f6f02fecdb7dff40c3fbc9470f5907c29f74ca", "commitDate": "2026-08-17" },
+  "refresh": "bash ~/WorkSpace/DshPluginAssistant/tools/install-into.sh .",
+  "layout": { "skills": [".agents/skills/dsh-plugin-*", ".claude/skills/dsh-plugin-*"], "hooks": ".dsh-assistant/hooks/", "reference": ".dsh-assistant/reference/" }
+}

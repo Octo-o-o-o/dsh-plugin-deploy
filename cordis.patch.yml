@@ -1,0 +1,3 @@
+- insert:
+    - id: dsh-plugin-deploy
+      name: dsh-plugin-deploy

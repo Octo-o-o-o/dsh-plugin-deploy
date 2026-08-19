@@ -1,0 +1,10 @@
+node_modules/
+*.tsbuildinfo
+.DS_Store
+coverage/
+.npm-cache/
+*.tgz
+
+
+# 内部施工交接文档，不随包发布
+docs/internal/
