@@ -3,12 +3,39 @@ import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import vm from 'node:vm'
 
+const hookStates = []
+let hookCursor = 0
+
+function beginRender() {
+  hookCursor = 0
+}
+
+function resetHookMemory() {
+  hookCursor = 0
+  hookStates.length = 0
+}
+
 const stubs = {
   react: {
     createElement(type, props, ...children) {
       return { type, props: { ...props, children: children.length <= 1 ? children[0] : children } }
     },
-    useState(value) { return [value, () => {}] },
+    useState(value) {
+      const i = hookCursor++
+      if (!(i in hookStates)) hookStates[i] = typeof value === 'function' ? value() : value
+      return [
+        hookStates[i],
+        next => {
+          hookStates[i] = typeof next === 'function' ? next(hookStates[i]) : next
+        },
+      ]
+    },
+    useRef(value) {
+      const i = hookCursor++
+      if (!(i in hookStates)) hookStates[i] = { current: value }
+      return hookStates[i]
+    },
+    useEffect() {},
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot() },
   },
   'react/jsx-runtime': {
@@ -59,6 +86,28 @@ function fakeActions() {
       submit() { calls.push(['submit']) },
     },
   }
+}
+
+function headerProps(input, actions, extra = {}) {
+  return {
+    sessionId: 'sessionId' in extra ? extra.sessionId : 'session-1',
+    useInput: 'useInput' in extra ? extra.useInput : (select => select(input)),
+    inputActions: 'inputActions' in extra ? extra.inputActions : actions,
+    useSession: extra.useSession,
+  }
+}
+
+function renderHeaderAction(input, actions, extra = {}) {
+  beginRender()
+  return ComposerActionButton(headerProps(input, actions, extra))
+}
+
+function findTrigger(tree) {
+  return findNodes(tree, node => node.type === 'button' && node.props?.['aria-haspopup'] === 'menu')[0]
+}
+
+function findMenuItem(tree, label) {
+  return findNodes(tree, node => node.type === 'button' && node.props?.role === 'menuitem' && node.props?.children === label)[0]
 }
 
 const client = loadClientExports()
@@ -149,77 +198,73 @@ test('draft already equal to the prompt may be submitted again', () => {
 })
 
 test('ComposerActionButton click writes the deploy prompt and submits', () => {
+  resetHookMemory()
   const { actions, calls } = fakeActions()
-  const tree = ComposerActionButton({
-    input: { draft: '', phase: 'plain' },
-    inputActions: actions,
-  })
-  const select = findNodes(tree, node => node.type === 'select')[0]
-  assert.ok(select, 'expected a select')
-  assert.equal(select.props.disabled, false)
-  select.props.onChange({
-    currentTarget: { value: 'deploy' },
-    target: { value: 'deploy' },
-  })
+  let tree = renderHeaderAction({ draft: '', phase: 'plain' }, actions)
+  const trigger = findTrigger(tree)
+  assert.ok(trigger, 'expected a header trigger button')
+  assert.equal(trigger.props.disabled, false)
+  trigger.props.onClick()
+  tree = renderHeaderAction({ draft: '', phase: 'plain' }, actions)
+  const item = findMenuItem(tree, '部署到 Cloudflare')
+  assert.ok(item, 'expected the deploy menu item after opening')
+  item.props.onClick()
   assert.deepEqual(calls, [['setDraft', DEPLOY_PROMPT], ['submit']])
 })
 
 test('ComposerActionButton click writes the publish-check prompt', () => {
+  resetHookMemory()
   const { actions, calls } = fakeActions()
-  const tree = ComposerActionButton({
-    input: { draft: '', phase: 'plain' },
-    inputActions: actions,
-  })
-  const select = findNodes(tree, node => node.type === 'select')[0]
-  select.props.onChange({
-    currentTarget: { value: 'publish' },
-    target: { value: 'publish' },
-  })
+  let tree = renderHeaderAction({ draft: '', phase: 'plain' }, actions)
+  findTrigger(tree).props.onClick()
+  tree = renderHeaderAction({ draft: '', phase: 'plain' }, actions)
+  findMenuItem(tree, '检查插件发布').props.onClick()
   assert.deepEqual(calls, [['setDraft', PUBLISH_CHECK_PROMPT], ['submit']])
 })
 
 test('ComposerActionButton is disabled when the draft is occupied', () => {
+  resetHookMemory()
   const { actions, calls } = fakeActions()
-  const tree = ComposerActionButton({
-    input: { draft: '还没写完的问题', phase: 'plain' },
-    inputActions: actions,
-  })
-  const select = findNodes(tree, node => node.type === 'select')[0]
-  assert.equal(select.props.disabled, true)
-  assert.match(select.props.title, /覆盖/)
-  select.props.onChange({
-    currentTarget: { value: 'deploy' },
-    target: { value: 'deploy' },
-  })
+  const tree = renderHeaderAction({ draft: '还没写完的问题', phase: 'plain' }, actions)
+  const trigger = findTrigger(tree)
+  assert.equal(trigger.props.disabled, true)
+  assert.match(trigger.props.title, /覆盖/)
+  trigger.props.onClick()
+  const open = renderHeaderAction({ draft: '还没写完的问题', phase: 'plain' }, actions)
+  assert.equal(findMenuItem(open, '部署到 Cloudflare'), undefined)
   assert.deepEqual(calls, [])
 })
 
 test('ComposerActionButton is disabled while the input machine is busy', () => {
+  resetHookMemory()
   const { actions, calls } = fakeActions()
-  const tree = ComposerActionButton({
-    input: { draft: '', phase: 'submitting' },
-    inputActions: actions,
-  })
-  const select = findNodes(tree, node => node.type === 'select')[0]
-  assert.equal(select.props.disabled, true)
-  assert.match(select.props.title, /处理/)
-  select.props.onChange({
-    currentTarget: { value: 'deploy' },
-    target: { value: 'deploy' },
-  })
+  const tree = renderHeaderAction({ draft: '', phase: 'submitting' }, actions)
+  const trigger = findTrigger(tree)
+  assert.equal(trigger.props.disabled, true)
+  assert.match(trigger.props.title, /处理/)
+  trigger.props.onClick()
+  const open = renderHeaderAction({ draft: '', phase: 'submitting' }, actions)
+  assert.equal(findMenuItem(open, '部署到 Cloudflare'), undefined)
   assert.deepEqual(calls, [])
 })
 
-test('ComposerActionButton is disabled without inputActions (hero / no session)', () => {
-  const tree = ComposerActionButton({
-    input: { draft: '', phase: 'plain' },
-  })
-  const select = findNodes(tree, node => node.type === 'select')[0]
-  assert.equal(select.props.disabled, true)
-  assert.match(select.props.title, /会话/)
+test('ComposerActionButton renders nothing without a session', () => {
+  resetHookMemory()
+  assert.equal(ComposerActionButton({
+    useInput: select => select({ draft: '', phase: 'plain' }),
+  }), null)
+  assert.equal(renderHeaderAction({ draft: '', phase: 'plain' }, undefined, {
+    inputActions: undefined,
+  }), null)
+  assert.equal(renderHeaderAction({ draft: '', phase: 'plain' }, fakeActions().actions, {
+    sessionId: undefined,
+  }), null)
+  assert.equal(renderHeaderAction({ draft: '', phase: 'plain' }, fakeActions().actions, {
+    useSession: select => select({ removed: true }),
+  }), null)
 })
 
-test('apply registers conversation.input.left with id and order', () => {
+test('apply registers conversation.session.header.actions with id and order', () => {
   const registers = []
   const ctx = {
     get() { return undefined },
@@ -242,11 +287,15 @@ test('apply registers conversation.input.left with id and order', () => {
     effect() {},
   }
   apply(ctx)
-  const entry = registers.find(item => item.opts.name === 'conversation.input.left')
+  const entry = registers.find(item => item.opts.name === 'conversation.session.header.actions')
   assert.ok(entry, JSON.stringify(registers.map(item => item.opts.name)))
   assert.equal(entry.opts.id, 'dsh-plugin-deploy')
   assert.equal(entry.opts.order, 100)
   assert.equal(entry.component, ComposerActionButton)
+  assert.equal(
+    registers.some(item => item.opts.name === 'conversation.input.left'),
+    false,
+  )
 })
 
 test('DeployToolView retry writes the deploy prompt', () => {

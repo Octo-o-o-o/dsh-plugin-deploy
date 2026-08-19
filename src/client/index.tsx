@@ -42,9 +42,11 @@ export function apply(ctx: ClientContext): void {
     key: 'publish_plugin',
   }, PublishToolView))
 
-  // list / session / InputZone。composer 工具行里的小控件，动作与「发一句话」同源。
-  ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
-    name: 'conversation.input.left',
+  // list / session / ConversationHeaderActionOwnerProps（空）。低频入口，不占输入区。
+  // useInput + inputActions 来自 session 标准 kit，不是 owner props。
+  // order 100：宿主 agent-preset=-10、subagent-catalog=10、job-list=20；负值留给静态上下文。
+  ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
+    name: 'conversation.session.header.actions',
     id: 'dsh-plugin-deploy',
     order: 100,
     label: '发布',
