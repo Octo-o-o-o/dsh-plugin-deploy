@@ -5,11 +5,20 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import type {} from '@deepseek-ai/dsh-client-ui-tool/client'
 import { ComposerActionButton } from './ActionButton.tsx'
 import { DeployCardController, type CredentialsWire, type SettingsScopeLike } from './card-controller.ts'
+import { PLUGIN_CSS } from './card-styles.ts'
 import { DeploySettingsCard } from './SettingsCard.tsx'
 import { DeployToolView } from './DeployView.tsx'
 import { PublishToolView } from './PublishView.tsx'
 
-export { DeployToolView, PublishToolView, ComposerActionButton }
+if (typeof document !== 'undefined'
+    && document.querySelector('style[data-plugin-css="dsh-plugin-deploy"]') === null) {
+  const tag = document.createElement('style')
+  tag.dataset.pluginCss = 'dsh-plugin-deploy'
+  tag.textContent = PLUGIN_CSS
+  document.head.appendChild(tag)
+}
+
+export { DeployToolView, PublishToolView, ComposerActionButton, DeploySettingsCard }
 export {
   DEPLOY_PROMPT,
   PUBLISH_CHECK_PROMPT,

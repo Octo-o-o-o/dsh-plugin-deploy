@@ -54,7 +54,7 @@ const menuStyle = {
   listStyle: 'none',
   border: '1px solid var(--dsw-alias-border-l2)',
   borderRadius: 12,
-  background: 'var(--dsw-specific-menu, var(--dsw-alias-bg-elevated, #fff))',
+  background: 'var(--dsw-specific-menu, var(--dsw-alias-bg-elevated, var(--dsw-alias-bg-layer-3)))',
   boxShadow: 'var(--dsw-shadow-lv3)',
 } as const
 
