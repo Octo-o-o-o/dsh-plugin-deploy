@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-deploy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DeepSeek Harness 插件：一句话把当前项目部署到 Cloudflare",
   "keywords": [
     "dsh",
