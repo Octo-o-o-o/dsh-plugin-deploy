@@ -132,7 +132,7 @@ npm does **not** read tokens from environment variables. The plugin writes a tem
 
 ## Don't want to type? There's a button
 
-After install, a **Publish** dropdown appears at the left of the composer:
+After install, a **Publish** button appears in the session header beside the title. Click it for two options:
 
 | Option | Equivalent to typing |
 |---|---|
