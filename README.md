@@ -9,7 +9,7 @@
   <a href="https://www.npmjs.com/package/dsh-plugin-deploy"><img alt="npm" src="https://img.shields.io/npm/v/dsh-plugin-deploy?color=cb3837&logo=npm" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
   <a href="https://deepseek-harness.github.io/deepseek-harness/"><img alt="harness" src="https://img.shields.io/badge/harness-0.1.0--rc.7-4c1?logo=deepseek" /></a>
-  <img alt="tests" src="https://img.shields.io/badge/tests-96%20passed-brightgreen" />
+  <img alt="tests" src="https://img.shields.io/badge/tests-106%20passed-brightgreen" />
   <img alt="tracks" src="https://img.shields.io/badge/track-Host%20%2B%20Web%20UI-8957e5" />
 </p>
 
@@ -87,7 +87,7 @@ npx @deepseek-ai/dsh web
 > 需要本机装了 [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0（临时预览要求）。没装的话插件会告诉你怎么装，不会闷头失败。
 
 > [!TIP]
-> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.1.1`。
+> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.1.2`。
 
 ---
 
@@ -198,13 +198,15 @@ npm 的 token 处理和别的工具不同——它**不读环境变量**。插�
 
 ## 配置凭据
 
-进 **设置 → 插件 → Cloudflare 部署**：
+进 **设置 → 插件 → 插件配置**，找到 **Cloudflare 部署** 卡片并展开（卡片与宿主自带的「终端 / Agent 循环 / 网页搜索」同构：默认收起，点标题展开）：
 
 | 字段 | 填什么 | 说明 |
 |---|---|---|
 | API token 引用名 | 默认 `CLOUDFLARE_API_TOKEN` | 这里填的是**名字**，不是 token 本身 |
 | npm token 引用名 | 默认 `NPM_TOKEN` | 同上 |
-| 写入 token 值（只写） | 粘贴真实 token | 保存后输入框清空，**永不回填** |
+| 写入 token 值（只写） | 粘贴真实 token | 保存后输入框清空，**永不回填**；右侧胶囊显示「已配置 / 未配置」 |
+
+改动会留在卡片里，点底部**保存**才写入；**放弃修改**退回上次保存的状态。卡片有未保存改动时，收起状态下标题旁也会显示「未保存」徽章。
 
 设计上分成两层：**配置里只存引用名**，**值交给 dsh 凭据服务**（存在 `$DSH_HOME/.credentials.yaml`，权限 `0600`）。卡片只会告诉你「已配置 / 未配置」，任何界面、任何响应都拿不到值。
 
@@ -301,7 +303,7 @@ git clone https://github.com/Octo-o-o-o/dsh-plugin-deploy.git
 cd dsh-plugin-deploy
 npm install
 node build.mjs                      # 构建 lib/index.js 与 lib/client.js
-node --test tests/*.test.js         # 96 个单元测试
+node --test tests/*.test.js         # 106 个单元测试
 
 # 装本地版本调试（路径必须绝对）
 npx @deepseek-ai/dsh plugin --profile web add "$PWD"

@@ -9,7 +9,7 @@
   <a href="https://www.npmjs.com/package/dsh-plugin-deploy"><img alt="npm" src="https://img.shields.io/npm/v/dsh-plugin-deploy?color=cb3837&logo=npm" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
   <a href="https://deepseek-harness.github.io/deepseek-harness/"><img alt="harness" src="https://img.shields.io/badge/harness-0.1.0--rc.7-4c1?logo=deepseek" /></a>
-  <img alt="tests" src="https://img.shields.io/badge/tests-96%20passed-brightgreen" />
+  <img alt="tests" src="https://img.shields.io/badge/tests-106%20passed-brightgreen" />
   <img alt="tracks" src="https://img.shields.io/badge/track-Host%20%2B%20Web%20UI-8957e5" />
 </p>
 
@@ -71,7 +71,7 @@ That's it. **No account required the first time** — the plugin uses a Cloudfla
 > Requires [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0 locally (the version that supports temporary previews). If it is missing, the plugin tells you how to install it instead of failing silently.
 
 > [!TIP]
-> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.1.1`.
+> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.1.2`.
 
 ---
 
@@ -157,13 +157,15 @@ Result cards also carry **Redeploy** / **Re-check** buttons on the same path.
 
 ## Configuring credentials
 
-**Settings → Plugins → Cloudflare deploy**:
+**Settings → Plugins → Plugin configuration**, then expand the **Cloudflare deploy** card (it matches the built-in Terminal / Agent loop / Web search cards: collapsed by default, click the title to open):
 
 | Field | What goes in | Note |
 |---|---|---|
 | API token reference | default `CLOUDFLARE_API_TOKEN` | this is a **name**, not the token |
 | npm token reference | default `NPM_TOKEN` | same |
-| Write token value (write-only) | paste the real token | the box clears on save and **never refills** |
+| Write token value (write-only) | paste the real token | the box clears on save and **never refills**; a pill on the right shows configured / not configured |
+
+Edits stay in the card until you press **Save**; **Discard** reverts to the last saved state. A card holding unsaved edits shows an "unsaved" badge beside its title even while collapsed.
 
 Two layers by design: **configuration stores only references**, **values live in the dsh credentials service** (`$DSH_HOME/.credentials.yaml`, mode `0600`). The card can only tell you *configured / not configured* — no surface ever returns the value.
 
@@ -254,7 +256,7 @@ git clone https://github.com/Octo-o-o-o/dsh-plugin-deploy.git
 cd dsh-plugin-deploy
 npm install
 node build.mjs                      # builds lib/index.js and lib/client.js
-node --test tests/*.test.js         # 96 unit tests
+node --test tests/*.test.js         # 106 unit tests
 
 npx @deepseek-ai/dsh plugin --profile web add "$PWD"   # absolute path required
 ```
