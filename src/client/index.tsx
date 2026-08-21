@@ -63,8 +63,10 @@ export function apply(ctx: ClientContext): void {
 
   const remote = ctx.get('remote') as { $on?: (event: string, listener: (ref: string) => void) => () => void } | undefined
   if (remote?.$on !== undefined) {
-    ctx.effect(() => remote.$on!('credentials/updated', ref => {
-      card.refreshCredential(ref)
-    }))
+    // 0.1.0-rc.7 转发 `credentials/updated`；0.1.1-rc.1 改名为 `credentials/reference-updated`。
+    // `$on` 对未知名字不抛错，宿主一次只发其中一个，两个席位并存是安全的。
+    const refresh = (ref: string): void => { card.refreshCredential(ref) }
+    ctx.effect(() => remote.$on!('credentials/updated', refresh))
+    ctx.effect(() => remote.$on!('credentials/reference-updated', refresh))
   }
 }

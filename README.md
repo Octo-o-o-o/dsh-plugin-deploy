@@ -9,7 +9,7 @@
   <a href="https://www.npmjs.com/package/dsh-plugin-deploy"><img alt="npm" src="https://img.shields.io/npm/v/dsh-plugin-deploy?color=cb3837&logo=npm" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
   <a href="https://deepseek-harness.github.io/deepseek-harness/"><img alt="harness" src="https://img.shields.io/badge/harness-0.1.0--rc.7-4c1?logo=deepseek" /></a>
-  <img alt="tests" src="https://img.shields.io/badge/tests-106%20passed-brightgreen" />
+  <img alt="tests" src="https://img.shields.io/badge/tests-107%20passed-brightgreen" />
   <img alt="tracks" src="https://img.shields.io/badge/track-Host%20%2B%20Web%20UI-8957e5" />
   <a href="https://dsh.pub/en/plugins/?q=Octo-o-o-o%2Fdsh-plugin-deploy"><img alt="dsh.pub" src="https://dsh.pub/api/badges/Octo-o-o-o/dsh-plugin-deploy.svg" /></a>
 </p>
@@ -88,7 +88,7 @@ npx @deepseek-ai/dsh web
 > 需要本机装了 [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0（临时预览要求）。没装的话插件会告诉你怎么装，不会闷头失败。
 
 > [!TIP]
-> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.1.2`。
+> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.1.3`。
 
 ---
 
@@ -253,7 +253,7 @@ Cloudflare 的 token 需要 `Edit Cloudflare Workers` 权限；也可以不配 t
 - **stderr 有 64 KB 上限**（harness 未暴露 `stderrMaxBytes`），极端情况下诊断信息可能被截断。
 - **发布只做 npm 和 tarball**。GitHub 直装、[dsh.pub](https://dsh.pub) 收录只在结果里给引导，不代你执行。
 - **未在 TUI / headless profile 下验证**。无交互提供方时按 fail-closed 处理，但没有实跑证据。
-- 需要 dsh **`0.1.0-rc.7`**。更早版本（如 rc.5）的 slot 语义不同，会加载失败。
+- 需要 dsh **`0.1.0-rc.7` 起**（含 `0.1.1-rc.1`）。更早版本（如 rc.5）的 slot 语义不同，会加载失败。凭据刷新同时订阅 `credentials/updated` 与 `credentials/reference-updated`。
 
 ---
 

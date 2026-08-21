@@ -12,7 +12,7 @@ description: DeepSeek Harness（dsh）树外插件的 Web UI 前端半（浏览�
 | 文件 | 用途 |
 |---|---|
 | `slots.md` | 全部 slot：名 / `kind` / `scope` / owner props / 声明包与行号。**只能用表里有的名字；kind/scope 会随版本变** |
-| `client-externals.md` | bundle 必须 external 的宿主模块（React 等 10 个 + `dsh-client-runtime/client`）+ factory banner/intro/footer 三段原文 |
+| `client-externals.md` | bundle 必须 external 的宿主模块（`PLATFORM_MODULES` + `PRELOADED_CLIENT_EXTERNALS`，以表为准）+ factory banner/intro/footer 三段原文 |
 | `client-manifest.md` | `dsh.client` 字段（`platform` 必填 / `inject` 仅信息性 / `immediately`）与宿主报错原文；`exports["./client"]` 规则；`/plugins/<id>/client.js` 路由 |
 | `settings-namespaces.md` | 该 commit 下设置页是否还有白名单（rc.7 起已无；更早 rc 有 → 树外插件配置暴露不到设置页） |
 
@@ -58,6 +58,7 @@ my-plugin/
 
 宿主把 `lib/client.js` 当 classic script 拉取，要求它调用 `window.__ModuleLoader__.load({ id: "<package name>", factory: (require) => { ...; return module.exports } })`。仓内用 `clientBundle()` tsdown preset 注入 banner/footer；**这个 preset 没有发布**，树外插件要自己配：
 - 输出 CJS，`external` = `client-externals.md` 里的全部模块（缺一项就把第二份 React / slots 运行时打进 bundle，静默出错）
+- 0.1.1-rc.1 起 `@deepseek-ai/dsh-client-web-react` / `@deepseek-ai/dsh-client-ui-attachment` / `@deepseek-ai/dsh-client-schema-form` 不再属于 `PLATFORM_MODULES`；要用就写进自己的 `dsh.client.external`
 - 🔴 **banner + intro + footer 三段缺一不可**，逐字对照 `client-externals.md`：`intro` 是 `var module = { exports: {} }; var exports = module.exports;`，浏览器全局没有 `module`，漏了它 factory 物化时抛 `ReferenceError: module is not defined`。**esbuild / tsup 没有 `intro` 选项，必须把它并进 `banner`（换行分隔）**；扫描器 `DSH-CLIENT-003` 会拦
 - `id` = package.json `name`
 - 参考样例：规则包仓 `tools/hooks/test-fixtures/good-client-bundle/tsdown.config.mjs`（结构示意，不保证任何构建工具版本）

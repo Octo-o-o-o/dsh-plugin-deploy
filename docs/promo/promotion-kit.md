@@ -7,10 +7,10 @@
 
 | 项 | 事实 |
 |---|---|
-| npm | `dsh-plugin-deploy@0.1.2`，MIT，6 个文件 / 146 KB |
+| npm | `dsh-plugin-deploy@0.1.3`，MIT，6 个文件 / 146 KB |
 | GitHub | https://github.com/Octo-o-o-o/dsh-plugin-deploy |
-| 测试 | 106 个单元测试全绿 |
-| 已验证 | L1 临时预览、L2 自有账号、npm 发布、从 npm 安装，均在真实 dsh 0.1.0-rc.7 端到端跑通 |
+| 测试 | 107 个单元测试全绿 |
+| 已验证 | L1 临时预览、L2 自有账号、npm 发布、从 npm 安装，均在真实 dsh 0.1.0-rc.7 端到端跑通；0.1.3 同时订阅 rc.7 的 `credentials/updated` 与 0.1.1-rc.1 的 `credentials/reference-updated` |
 | 生态位 | 调研时 dsh 生态部署类插件仅 1 个（只支持 Sealos），Cloudflare/Vercel/Netlify/VPS 方向 0 个 |
 | 未做 | Vercel / Netlify / VPS / 自定义域 / Next.js SSR；未在 TUI/headless 验证 |
 

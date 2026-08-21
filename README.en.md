@@ -72,7 +72,7 @@ That's it. **No account required the first time** — the plugin uses a Cloudfla
 > Requires [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0 locally (the version that supports temporary previews). If it is missing, the plugin tells you how to install it instead of failing silently.
 
 > [!TIP]
-> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.1.2`.
+> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.1.3`.
 
 ---
 
@@ -206,7 +206,7 @@ Stated plainly:
 - **stderr is capped at 64 KB** (harness exposes no `stderrMaxBytes`), so extreme diagnostics may truncate.
 - **Publishing covers npm and tarball only.** GitHub installs and [dsh.pub](https://dsh.pub) listing are pointed at, never performed for you.
 - **Not verified on TUI / headless profiles.** Fail-closed by construction, but without a live run to prove it.
-- Requires dsh **`0.1.0-rc.7`**. Earlier releases (e.g. rc.5) declare slots differently and will fail to load.
+- Requires dsh **`0.1.0-rc.7` and later** (including `0.1.1-rc.1`). Earlier releases (e.g. rc.5) declare slots differently and will fail to load. Credential refresh listens to both `credentials/updated` and `credentials/reference-updated`.
 
 ---
 

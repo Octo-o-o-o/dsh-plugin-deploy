@@ -40,3 +40,12 @@ test('client bundle registers a factory that exports name/inject/apply', () => {
   assert.ok(Array.isArray(exports_.inject))
   assert.equal(typeof exports_.apply, 'function')
 })
+
+test('client refreshes credentials on both host event names', () => {
+  const source = readFileSync(new URL('../src/client/index.tsx', import.meta.url), 'utf8')
+  assert.match(source, /credentials\/updated/)
+  assert.match(source, /credentials\/reference-updated/)
+  const bundle = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
+  assert.match(bundle, /credentials\/updated/)
+  assert.match(bundle, /credentials\/reference-updated/)
+})
