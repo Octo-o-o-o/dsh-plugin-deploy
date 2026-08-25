@@ -2,8 +2,8 @@
   "assistant": "dsh-plugin-assistant",
   "assistantVersion": "0.1.0",
   "source": "~/WorkSpace/DshPluginAssistant",
-  "installedAt": "2026-08-21T08:24:34Z",
-  "harness": { "version": "0.1.1-rc.1", "commit": "528c682e061696f5a160f363f236ecbf53cbd006", "commitDate": "2026-08-21" },
+  "installedAt": "2026-08-25T01:44:43Z",
+  "harness": { "version": "0.1.1-rc.2", "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e", "commitDate": "2026-08-21" },
   "refresh": "bash ~/WorkSpace/DshPluginAssistant/tools/install-into.sh .",
   "layout": { "skills": [".agents/skills/dsh-plugin-*", ".claude/skills/dsh-plugin-*"], "hooks": ".dsh-assistant/hooks/", "reference": ".dsh-assistant/reference/" }
 }
