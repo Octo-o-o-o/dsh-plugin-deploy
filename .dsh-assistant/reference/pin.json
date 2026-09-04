@@ -1,20 +1,20 @@
 {
   "generator": "tools/gen-facts.mjs",
-  "generatedAt": "2026-08-25T01:32:14.715Z",
+  "generatedAt": "2026-09-04T05:55:02.093Z",
   "harness": {
     "repo": "~/WorkSpace/Reference/deepseek-harness",
     "ref": "origin/master",
-    "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
-    "commitDate": "2026-08-21T20:03:37+08:00",
-    "subject": "Merge pull request #2908 from deepseek-harness/release/dsh-0.1.1-rc.2",
-    "version": "0.1.1-rc.2"
+    "commit": "76fda729799fe9b3848dbe2c211d4b231032b81e",
+    "commitDate": "2026-09-03T14:02:58+08:00",
+    "subject": "Merge pull request #3481 from deepseek-harness/fix/http-proxy-rc-version",
+    "version": "0.1.2-rc.1"
   },
   "sessionFormatVersion": "export const SESSION_FORMAT_VERSION = 0",
   "counts": {
-    "slots": 48,
-    "events": 59,
-    "waterfallEvents": 13,
-    "platformModules": 7,
+    "slots": 53,
+    "events": 65,
+    "waterfallEvents": 14,
+    "platformModules": 8,
     "anchors": 19
   },
   "settingsNamespacesWhitelist": null,
@@ -23,63 +23,57 @@
   "npm": [
     {
       "name": "@deepseek-ai/dsh",
-      "latest": "0.1.1-rc.2",
-      "next": "0.1.1-rc.2",
-      "modified": "2026-08-21"
+      "latest": "0.1.2-rc.1",
+      "next": "0.1.2-rc.1",
+      "modified": "2026-09-04"
     },
     {
       "name": "@deepseek-ai/dsh-tools",
       "latest": "0.0.1-rc.1",
-      "next": "0.1.1-rc.2",
-      "modified": "2026-08-21"
+      "next": "0.1.2-rc.1",
+      "modified": "2026-09-03"
     },
     {
       "name": "@deepseek-ai/dsh-agent",
       "latest": "0.1.0-rc.6",
-      "next": "0.1.1-rc.2",
-      "modified": "2026-08-21"
+      "next": "0.1.2-rc.1",
+      "modified": "2026-09-03"
     },
     {
-      "name": "@deepseek-ai/dsh-client-runtime",
-      "latest": "0.0.1-rc.1",
-      "next": "0.1.1-rc.2",
-      "modified": "2026-08-21"
+      "name": "@deepseek-ai/dsh-client-ui-renderer",
+      "latest": "0.1.0-rc.8",
+      "next": "0.1.2-rc.1",
+      "modified": "2026-09-03"
+    },
+    {
+      "name": "@deepseek-ai/dsh-client-store",
+      "latest": "0.1.2-alpha.2",
+      "next": "0.1.2-rc.1",
+      "modified": "2026-09-03"
     },
     {
       "name": "@deepseek-ai/dsh-client-ui-slots",
       "latest": "0.0.1-rc.1",
-      "next": "0.1.1-rc.2",
-      "modified": "2026-08-21"
-    },
-    {
-      "name": "@deepseek-ai/dsh-client-web-react",
-      "latest": "0.0.1-rc.1",
-      "next": "0.1.0-rc.7",
-      "modified": "2026-08-17"
+      "next": "0.1.2-rc.1",
+      "modified": "2026-09-03"
     },
     {
       "name": "@deepseek-ai/dsh-client-ui-primitives",
       "latest": "0.0.1-rc.1",
-      "next": "0.1.1-rc.2",
-      "modified": "2026-08-21"
+      "next": "0.1.2-rc.1",
+      "modified": "2026-09-03"
     },
     {
       "name": "@deepseek-ai/dsh-client-ui-attachment",
       "latest": "0.0.1-rc.2",
-      "next": "0.1.1-rc.2",
-      "modified": "2026-08-21"
-    },
-    {
-      "name": "@deepseek-ai/dsh-client-schema-form",
-      "latest": "0.0.1-rc.1",
-      "next": "0.1.0-rc.7",
-      "modified": "2026-08-17"
+      "next": "0.1.2-rc.1",
+      "modified": "2026-09-03"
     },
     {
       "name": "@deepseek-ai/cordis",
-      "latest": "4.0.1",
+      "latest": "4.0.2",
       "next": "4.0.1-rc.4",
-      "modified": "2026-08-13"
+      "modified": "2026-08-30"
     }
   ]
 }

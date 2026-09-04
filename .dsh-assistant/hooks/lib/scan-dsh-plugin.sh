@@ -68,8 +68,8 @@ json_list_from_md() {
   ' "$file" | tr -d '[],"' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | grep -v '^$'
 }
 
-DEFAULT_WATERFALL="agent/pre-step agent/request agent/request-error approval/request fs/edit-intent fs/write-intent llm/stream session-telemetry/record system-prompt/assemble tools/code-dispatch-log tools/execute tools/post-execute tools/pre-execute"
-DEFAULT_EXTERNALS="react react/jsx-runtime react-dom react-dom/client @deepseek-ai/cordis @deepseek-ai/dsh-client-ui-slots @deepseek-ai/dsh-client-ui-primitives @deepseek-ai/dsh-client-runtime/client"
+DEFAULT_WATERFALL="agent/pre-step agent/request agent/request-error approval/request fs/edit-intent fs/write-intent llm/stream session-telemetry/record system-prompt/assemble tools/execute tools/post-execute tools/pre-execute tools/ptc-dispatch-log user-questions/request"
+DEFAULT_EXTERNALS="react react/jsx-runtime react-dom react-dom/client @deepseek-ai/cordis @deepseek-ai/dsh-client-store @deepseek-ai/dsh-client-ui-slots @deepseek-ai/dsh-client-ui-primitives"
 
 WATERFALL_EVENTS="$DEFAULT_WATERFALL"
 EXTERNALS="$DEFAULT_EXTERNALS"

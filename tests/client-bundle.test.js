@@ -22,7 +22,7 @@ const stubs = {
   '@deepseek-ai/dsh-client-ui-primitives': {},
   '@deepseek-ai/dsh-client-ui-attachment': {},
   '@deepseek-ai/dsh-client-schema-form': {},
-  '@deepseek-ai/dsh-client-runtime/client': {},
+  '@deepseek-ai/cordis': {},
 }
 
 test('client bundle registers a factory that exports name/inject/apply', () => {
@@ -41,11 +41,11 @@ test('client bundle registers a factory that exports name/inject/apply', () => {
   assert.equal(typeof exports_.apply, 'function')
 })
 
-test('client refreshes credentials on both host event names', () => {
+test('client refreshes credentials on the host reference-updated event', () => {
   const source = readFileSync(new URL('../src/client/index.tsx', import.meta.url), 'utf8')
-  assert.match(source, /credentials\/updated/)
   assert.match(source, /credentials\/reference-updated/)
+  assert.doesNotMatch(source, /['"]credentials\/updated['"]/)
   const bundle = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
-  assert.match(bundle, /credentials\/updated/)
   assert.match(bundle, /credentials\/reference-updated/)
+  assert.doesNotMatch(bundle, /['"]credentials\/updated['"]/)
 })

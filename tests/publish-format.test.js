@@ -75,7 +75,7 @@ const stubs = {
   '@deepseek-ai/dsh-client-ui-primitives': {},
   '@deepseek-ai/dsh-client-ui-attachment': {},
   '@deepseek-ai/dsh-client-schema-form': {},
-  '@deepseek-ai/dsh-client-runtime/client': {},
+  '@deepseek-ai/cordis': {},
 }
 
 function loadClientExports() {

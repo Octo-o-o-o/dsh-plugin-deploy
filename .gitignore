@@ -8,3 +8,6 @@ coverage/
 
 # 内部施工交接文档，不随包发布
 docs/internal/
+
+# dsh-plugin-assistant 规则包的 post-edit 扫描缓存
+.claude/.dsh-plugin-last-scan.txt

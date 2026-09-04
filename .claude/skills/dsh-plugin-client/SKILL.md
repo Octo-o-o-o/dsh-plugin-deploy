@@ -29,7 +29,7 @@ my-plugin/
 ```
 
 浏览器半模块的形状（来自 cookbook adding-a-settings-card）：
-- `import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'`
+- `import type { Context as ClientContext } from '@deepseek-ai/cordis'`
 - `export const inject = ['slots', ...]`：只列你真的读的**客户端服务**（`slots` / `locale` / `connection` / `remote` / `settingsScope` …，名字查钉死源码）
 - `export function apply(ctx: ClientContext)`：所有注册走 `ctx.slots.register(...)`；**注册到别的包声明的 slot 必须包在 `ctx.slots.inject(name, () => ctx.slots.register(...))` 里**——它等待声明出现、声明消失时撤回；裸 `slots.register` 到未声明 slot 是加载期错误
 - 别的插件的 slot 声明只能 **type-only** import（`import type {} from '<pkg>/client'`）；跨插件 value import 会被 bundle 纯度门禁拒绝，跨插件协作走 cordis 服务
@@ -48,17 +48,17 @@ my-plugin/
   "files": ["lib/index.js", "lib/client.js", "cordis.patch.yml"],   // 漏 client.js → npm 发布丢文件（DSH-PKG-004）
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web", "inject": ["@deepseek-ai/dsh-client-runtime"] }   // inject 仅信息性，不排序、不等于服务级 inject
+    "client": { "platform": "web", "inject": ["@deepseek-ai/dsh-client-ui-renderer"] }   // inject 仅信息性，不排序、不等于服务级 inject
   }
 }
 ```
-依赖里的 `@deepseek-ai/dsh-client-*` 要钉 `next` 或精确 `0.1.0-rc.N`（`latest` 是旧 train，见 `npm-dist-tags.md`）。
+依赖里的 `@deepseek-ai/dsh-client-*` 要钉 `next` 或精确 `0.1.2-rc.N`（`latest` 可能仍是旧 train，见 `npm-dist-tags.md`）。`@deepseek-ai/dsh-client-runtime` 在 0.1.2 已删除，不要再 inject 或 import。
 
 ## 3. lib/client.js 必须是 factory bundle（不是 ESM）
 
 宿主把 `lib/client.js` 当 classic script 拉取，要求它调用 `window.__ModuleLoader__.load({ id: "<package name>", factory: (require) => { ...; return module.exports } })`。仓内用 `clientBundle()` tsdown preset 注入 banner/footer；**这个 preset 没有发布**，树外插件要自己配：
 - 输出 CJS，`external` = `client-externals.md` 里的全部模块（缺一项就把第二份 React / slots 运行时打进 bundle，静默出错）
-- 0.1.1-rc.1 起 `@deepseek-ai/dsh-client-web-react` / `@deepseek-ai/dsh-client-ui-attachment` / `@deepseek-ai/dsh-client-schema-form` 不再属于 `PLATFORM_MODULES`；要用就写进自己的 `dsh.client.external`
+- 0.1.2 起 `PLATFORM_MODULES` 含 `@deepseek-ai/dsh-client-store`，`PRELOADED_CLIENT_EXTERNALS` 为空（`dsh-client-runtime` 已删除）。`@deepseek-ai/dsh-client-ui-attachment` 等不再属于基座；要用就写进自己的 `dsh.client.external`
 - 🔴 **banner + intro + footer 三段缺一不可**，逐字对照 `client-externals.md`：`intro` 是 `var module = { exports: {} }; var exports = module.exports;`，浏览器全局没有 `module`，漏了它 factory 物化时抛 `ReferenceError: module is not defined`。**esbuild / tsup 没有 `intro` 选项，必须把它并进 `banner`（换行分隔）**；扫描器 `DSH-CLIENT-003` 会拦
 - `id` = package.json `name`
 - 参考样例：规则包仓 `tools/hooks/test-fixtures/good-client-bundle/tsdown.config.mjs`（结构示意，不保证任何构建工具版本）

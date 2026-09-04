@@ -7,7 +7,7 @@ const stubs = {
     useState(value) { return [value, () => {}] },
   },
   'react/jsx-runtime': { jsx() { return null }, jsxs() { return null }, Fragment: 'fragment' },
-  '@deepseek-ai/dsh-client-runtime/client': {},
+  '@deepseek-ai/cordis': {},
 }
 
 const reg = new Map()
