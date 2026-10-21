@@ -210,4 +210,58 @@ export const PLUGIN_CSS = `
   line-height: 1.5;
   color: var(--dsw-alias-label-tertiary);
 }
+.dpd-setup-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--dsw-alias-label-secondary);
+}
+.dpd-token-guide {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--dsw-alias-label-secondary);
+}
+.dpd-token-guide > summary {
+  cursor: pointer;
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+.dpd-token-guide > summary:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.dpd-guide-body {
+  padding-top: 6px;
+}
+.dpd-guide-body ol {
+  margin: 0;
+  padding-inline-start: 20px;
+}
+.dpd-guide-body li + li {
+  margin-top: 6px;
+}
+.dpd-guide-body p {
+  margin: 8px 0 0;
+}
+.dpd-guide-body code {
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+.dpd-guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 8px;
+}
+.dpd-guide-links a {
+  color: var(--dsw-alias-brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
 `.trim()

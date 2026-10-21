@@ -72,13 +72,13 @@ AI 帮你写完了一个网站、一个 Worker、一个插件——然后卡在�
 
 ```sh
 # 装进你的 dsh profile（需要 pnpm 在 PATH 上）
-npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.0
+npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.1
 
 # 启动
 npx @deepseek-ai/dsh@0.2.1-rc.2 web
 ```
 
-桌面版可在插件市场更新，或使用**桌面版附带的** CLI：`dsh plugin --profile desktop add dsh-plugin-deploy@0.2.0`。先确认 `dsh --version`；PATH 中的旧 CLI 可能与桌面版不同。
+桌面版可在插件市场更新，或使用**桌面版附带的** CLI：`dsh plugin --profile desktop add dsh-plugin-deploy@0.2.1`。先确认 `dsh --version`；PATH 中的旧 CLI 可能与桌面版不同。
 
 然后在对话里说：
 
@@ -90,7 +90,7 @@ npx @deepseek-ai/dsh@0.2.1-rc.2 web
 > 需要本机装了 [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0（临时预览要求）。没装的话插件会告诉你怎么装，不会闷头失败。
 
 > [!TIP]
-> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.2.0`。
+> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.2.1`。
 
 ---
 
@@ -216,7 +216,11 @@ npm 的 token 处理和别的工具不同——它**不读环境变量**。插�
 
 设计上分成两层：**配置里只存引用名**，**值交给 dsh 凭据服务**（存在 `$DSH_HOME/.credentials.yaml`，权限 `0600`）。卡片只会告诉你「已配置 / 未配置」，任何界面、任何响应都拿不到值。
 
-Cloudflare 的 token 需要 `Edit Cloudflare Workers` 权限；也可以不配 token，直接 `wrangler login` 走 OAuth。
+在两个「写入 token」输入框下，可以展开「如何获取 Cloudflare token / npm token」：页面直接提供官方入口、创建步骤、资源范围、发布权限与保存方法。说明默认折叠，已配置用户可直接使用原来的表单。
+
+Cloudflare 可使用 `Edit Cloudflare Workers` 模板创建 token，并把账号资源限定到部署使用的账号；也可以在本机终端用 `wrangler login` 走 OAuth。参见 [Cloudflare 创建说明](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/)。
+
+npm 当前的直接发布流程需要 granular token 的 `Read and write (publish and stage)` 权限。按包或作用域限制访问，设置较短有效期；仅在策略允许且需要免交互发布时开启 Bypass 2FA。组织要求每次二次验证时，改用终端交互式发布。`stage only` token 需使用 npm 的 staging 流程，当前插件尚未提供该流程。参见 [npm 创建说明](https://docs.npmjs.com/creating-and-viewing-access-tokens/)。
 
 ---
 
