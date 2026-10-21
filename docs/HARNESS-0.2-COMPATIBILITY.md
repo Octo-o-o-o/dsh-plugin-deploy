@@ -1,6 +1,6 @@
 # Harness 0.2 兼容与验证记录
 
-日期：2026-10-21（Asia/Taipei）。插件候选版本：0.2.0。轨道：Host + Web UI。
+日期：2026-10-21（Asia/Taipei）。插件发行版本：0.2.0。轨道：Host + Web UI。
 
 ## 兼容范围与问题来源
 
@@ -46,6 +46,17 @@
 - TypeScript 检查通过。扫描器会检查所有跟踪文件，跳过 Git 忽略的本机笔记；初始扫描命中的既有内部笔记未被修改或提交。
 - 事实层重新生成：100 个 slot、82 个事件、11 个平台模块、19/19 合同锚点。生成器已随本仓保存，适配了新版源码位置。
 
+## 发布与 registry 复验
+
+- [PR #2](https://github.com/Octo-o-o-o/dsh-plugin-deploy/pull/2) 已合并；[GitHub Actions](https://github.com/Octo-o-o-o/dsh-plugin-deploy/actions/runs/39535779543) 的 Linux / Node 22、Windows / Node 24 两组均成功，包含类型检查、118 项测试和扫描。
+- [npm 0.2.0](https://www.npmjs.com/package/dsh-plugin-deploy/v/0.2.0) 已于 `2026-10-21T03:03:23.570Z` 发布，registry 的 `latest` 已指向 `0.2.0`；公开的 SHA-1 和 SHA-512 integrity 与最终发行 tarball 一致。
+- 在另一全新 profile 中执行官方桌面版自带 CLI 的 `plugin --profile compat-registry add dsh-plugin-deploy@0.2.0` 成功，未使用 Harness 版本兼容豁免。安装后的 7 个文件逐字节匹配发行 tarball。
+- 发布后立即尝试不指定版本的命令时，本机 pnpm 的 `minimumReleaseAge: 1440` 使其选回旧版 `0.1.3` 并被 Harness 拒绝；显式指定 `@0.2.0` 后成功。因此新包冷却期内应使用上面的精确版本命令。
+- 从 registry 安装的插件在实际运行时启动成功，浏览器显示 `v0.2.0`、`1 total · 1 running`，来源为 `dsh-plugin-deploy@0.2.0`。两个工具、两个命令与保存的配置引用均正常读取。
+- registry 安装后的 `check`、`pack` 均成功，8 项阻塞检查全部通过；第 9 项 `version-available` 如实提示 `0.2.0` 已被占用，在这两种模式中为非阻塞提示。生命周期脚本隔离测试也再次通过。
+
+![npm 安装后的 v0.2.0、Running 状态与 registry 来源](evidence/harness-0.2.1-rc.2-npm.png)
+
 ## 验证边界
 
 本次在 macOS 上验证了本机官方 0.2.1-rc.2 的安装、运行时、浏览器界面、配置持久化与真实打包流程。没有把这些结果记为 Windows 桌面版真机验收，也没有重新向 Cloudflare 上传网站或新建云资源。Windows / Linux 的 GitHub Actions 检查结果单独以远端实际运行记录为准。TUI、headless 交互提供方和模型驱动的公网部署未在本次重跑。
@@ -67,7 +78,5 @@ npx @deepseek-ai/dsh@0.2.1-rc.2 --profile deploy-test --no-open
 # 更新事实层：源码仓可以位于任意目录。
 node tools/gen-harness-facts.mjs --repo <harness-clone> --ref <commit> --out .dsh-assistant/reference --npm
 ```
-
-发布状态及获取方式以 npm registry 和 issue 的最终处理记录为准。
 
 ![0.2.1-rc.2 运行时中 tarball 安装后的 v0.2.0 与 Running 状态](evidence/harness-0.2.1-rc.2-installed.png)
