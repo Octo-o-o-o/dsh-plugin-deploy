@@ -56,7 +56,7 @@ And it does not trade away safety for convenience: tokens never enter the conver
 
 ```sh
 # Install into your dsh profile (pnpm must be on PATH)
-npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.0
+npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.1
 
 # Boot
 npx @deepseek-ai/dsh@0.2.1-rc.2 web
@@ -72,7 +72,7 @@ That's it. **No account required the first time** — the plugin uses a Cloudfla
 > Requires [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0 locally (the version that supports temporary previews). If it is missing, the plugin tells you how to install it instead of failing silently.
 
 > [!TIP]
-> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.2.0`.
+> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.2.1`.
 
 ---
 
@@ -110,7 +110,7 @@ npm     # verified + your approval → publish to npm
 
 ### The checks are the point
 
-Plenty of plugins in the wild install but never activate, or publish with files missing. Eight checks run before anything else:
+Plenty of plugins in the wild install but never activate, or publish with files missing. Nine checks run before anything else:
 
 | Check | What it catches |
 |---|---|
@@ -168,6 +168,8 @@ Open **Plugins → Installed → dsh-plugin-deploy**, then expand the **Cloudfla
 | API token reference | default `CLOUDFLARE_API_TOKEN` | this is a **name**, not the token |
 | npm token reference | default `NPM_TOKEN` | same |
 | Write token value (write-only) | paste the real token | the box clears on save and **never refills**; a pill on the right shows configured / not configured |
+
+Each token input has a collapsed setup guide with official links, creation steps, resource scope, permissions, and save instructions. Cloudflare supports the `Edit Cloudflare Workers` template restricted to the deployment account, or local `wrangler login`. For npm's current direct-publish flow, use a granular token with `Read and write (publish and stage)` permissions limited to the required packages/scopes and a short expiry. Enable Bypass 2FA only when policy allows unattended publishing; otherwise publish interactively in a terminal. Stage-only tokens require npm's staging workflow, which this plugin does not currently provide. See the [Cloudflare guide](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) and [npm guide](https://docs.npmjs.com/creating-and-viewing-access-tokens/).
 
 Edits stay in the card until you press **Save**; **Discard** reverts to the last saved state. A card holding unsaved edits shows an "unsaved" badge beside its title even while collapsed.
 
