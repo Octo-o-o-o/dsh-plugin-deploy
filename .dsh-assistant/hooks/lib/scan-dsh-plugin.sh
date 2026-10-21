@@ -399,7 +399,14 @@ check_client_bundle() {
 # ---------- 入口 ----------
 if [[ -n "$ALL_DIR" ]]; then
   if [[ ! -d "$ALL_DIR" ]]; then echo "scan-dsh-plugin.sh: dir not found: $ALL_DIR" >&2; exit 64; fi
+  # Match the source/package boundary: ignored recovery notes and personal files
+  # are not release inputs. Tracked files are always scanned, even if ignored.
+  SCAN_GIT_ROOT="$(git -C "$ALL_DIR" rev-parse --show-toplevel 2>/dev/null || true)"
   while IFS= read -r f; do
+    if [[ -n "$SCAN_GIT_ROOT" ]]; then
+      scan_abs="$(cd "$(dirname "$f")" && pwd)/$(basename "$f")"
+      git -C "$SCAN_GIT_ROOT" check-ignore -q -- "$scan_abs" && continue
+    fi
     scan_one "$f"
   done < <(find "$ALL_DIR" -type f \
       -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/.pnpm-store/*' -not -path '*/coverage/*' \

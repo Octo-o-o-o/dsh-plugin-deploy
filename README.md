@@ -8,8 +8,8 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/dsh-plugin-deploy"><img alt="npm" src="https://img.shields.io/npm/v/dsh-plugin-deploy?color=cb3837&logo=npm" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
-  <a href="https://deepseek-harness.github.io/deepseek-harness/"><img alt="harness" src="https://img.shields.io/badge/harness-0.1.0--rc.7-4c1?logo=deepseek" /></a>
-  <img alt="tests" src="https://img.shields.io/badge/tests-107%20passed-brightgreen" />
+  <a href="https://deepseek-harness.github.io/deepseek-harness/"><img alt="harness" src="https://img.shields.io/badge/harness-0.2.1--rc.2-4c1?logo=deepseek" /></a>
+  <img alt="tests" src="https://img.shields.io/badge/tests-118%20passed-brightgreen" />
   <img alt="tracks" src="https://img.shields.io/badge/track-Host%20%2B%20Web%20UI-8957e5" />
   <a href="https://dsh.pub/en/plugins/?q=Octo-o-o-o%2Fdsh-plugin-deploy"><img alt="dsh.pub" src="https://dsh.pub/api/badges/Octo-o-o-o/dsh-plugin-deploy.svg" /></a>
 </p>
@@ -62,7 +62,7 @@ AI 帮你写完了一个网站、一个 Worker、一个插件——然后卡在�
 |---|---|---|
 | 把刚做好的页面发出去看看 | 注册 Cloudflare → 建项目 → 装 wrangler → 写配置 → 调试认证 | 说一句「发出去」，拿到 URL |
 | 部署到自己的账号 | 每次都要处理认证状态、写 `wrangler.jsonc` | 存一次 token 引用名，之后一句话 |
-| 把做好的 dsh 插件发布 | 手动检查 8 处易错点 → `npm pack` 看清单 → `npm publish` 撞 2FA | 一条命令，校验不过就不让发 |
+| 把做好的 dsh 插件发布 | 手动检查 9 处易错点 → `npm pack` 看清单 → `npm publish` 撞 2FA | 一条命令，校验不过就不让发 |
 
 而且它**不会**为了省事牺牲安全：token 永远不进对话、不进日志；对外发布一定要你点确认。
 
@@ -72,11 +72,13 @@ AI 帮你写完了一个网站、一个 Worker、一个插件——然后卡在�
 
 ```sh
 # 装进你的 dsh profile（需要 pnpm 在 PATH 上）
-npx @deepseek-ai/dsh plugin --profile web add dsh-plugin-deploy
+npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.0
 
 # 启动
-npx @deepseek-ai/dsh web
+npx @deepseek-ai/dsh@0.2.1-rc.2 web
 ```
+
+桌面版可在插件市场更新，或使用**桌面版附带的** CLI：`dsh plugin --profile desktop add dsh-plugin-deploy@0.2.0`。先确认 `dsh --version`；PATH 中的旧 CLI 可能与桌面版不同。
 
 然后在对话里说：
 
@@ -88,7 +90,7 @@ npx @deepseek-ai/dsh web
 > 需要本机装了 [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0（临时预览要求）。没装的话插件会告诉你怎么装，不会闷头失败。
 
 > [!TIP]
-> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.1.4`。
+> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.2.0`。
 
 ---
 
@@ -135,17 +137,18 @@ npx @deepseek-ai/dsh web
 ### 三种模式
 
 ```sh
-check   # 只校验，零副作用（默认）
+check   # 只校验，不执行包脚本、不改项目文件（默认）
 pack    # 校验通过 → 打出 .tgz
 npm     # 校验通过 + 你点确认 → 发布到 npm
 ```
 
 ### 校验才是重点
 
-生态里大量插件「装上了但不激活」「npm 发布漏文件」「GitHub 装下来缺 lib/」。发布前这 8 条会逐项检查：
+生态里大量插件「装上了但不激活」「npm 发布漏文件」「GitHub 装下来缺 lib/」。发布前这 9 条会逐项检查：
 
 | 检查 | 拦住什么 |
 |---|---|
+| `dsh-compat` | 使用当前宿主的兼容性规则检查 `engines.dsh`（优先）或 DSH peer 范围，拦住新版安装拒绝 |
 | `dsh-plugin` | 没有 `dsh.bundle.patch` → 装了不激活，只有一行 stderr 警告 |
 | `patch-in-pack` | patch 文件没进 npm 包 → 同上，但更隐蔽 |
 | `client-bundle` | `lib/client.js` 不是 factory 形态或 id 不匹配 → 浏览器报 `loaded without registering` |
@@ -157,18 +160,20 @@ npm     # 校验通过 + 你点确认 → 发布到 npm
 
 **任何一条不过，`pack` 和 `npm` 都不执行**（fail closed）。
 
+检查、打包和发布均不会执行目标包的生命周期脚本；请先构建 `lib/` 等发布产物，再调用本工具。
+
 ### 发布到 npm
 
 ```
 你：把这个插件发布到 npm
 
-Agent：[8 条校验全过] → [审批：即将发布 xxx@0.1.0 到公共仓库] → 你点「允许一次」→ 发布
+Agent：[9 条校验全过] → [审批：即将发布 xxx@0.1.0 到公共仓库] → 你点「允许一次」→ 发布
 ```
 
 npm 的 token 处理和别的工具不同——它**不读环境变量**。插件的做法是：临时 `.npmrc` 里只写 `${DSH_NPM_TOKEN}` 这个引用，真值经进程环境传给 npm，用完删除。**不碰你的 `~/.npmrc`，token 不落盘。**
 
 > [!TIP]
-> 如果你的 npm 账号开了 2FA，普通 token 会卡在 OTP 提示上。用 **automation token** 或勾了 "Bypass 2FA" 的 **granular token**，并建议设短过期、发完就撤销。
+> 如果你的 npm 账号开了 2FA，普通 token 会卡在 OTP 提示上。用具有发布权限、按需勾选 "Bypass 2FA" 的 **granular token**，并建议设短过期、发完就撤销。参见 [npm token 官方说明](https://docs.npmjs.com/about-access-tokens/)。
 
 ---
 
@@ -199,7 +204,7 @@ npm 的 token 处理和别的工具不同——它**不读环境变量**。插�
 
 ## 配置凭据
 
-进 **设置 → 插件 → 插件配置**，找到 **Cloudflare 部署** 卡片并展开（卡片与宿主自带的「终端 / Agent 循环 / 网页搜索」同构：默认收起，点标题展开）：
+进侧栏 **插件 → 已安装 → dsh-plugin-deploy**，展开 **Cloudflare 部署** 卡片：
 
 | 字段 | 填什么 | 说明 |
 |---|---|---|
@@ -253,7 +258,7 @@ Cloudflare 的 token 需要 `Edit Cloudflare Workers` 权限；也可以不配 t
 - **stderr 有 64 KB 上限**（harness 未暴露 `stderrMaxBytes`），极端情况下诊断信息可能被截断。
 - **发布只做 npm 和 tarball**。GitHub 直装、[dsh.pub](https://dsh.pub) 收录只在结果里给引导，不代你执行。
 - **未在 TUI / headless profile 下验证**。无交互提供方时按 fail-closed 处理，但没有实跑证据。
-- 需要 dsh **`0.1.2-rc.1` 起**。客户端 `ClientContext` 从 `@deepseek-ai/cordis` 引入；凭据刷新只订阅 `credentials/reference-updated`。
+- 需要 dsh **`>=0.2.1-rc.2 <0.3.0-0`**；真机验证版本为 `0.2.1-rc.2`。旧 `0.1.x` Harness 请保留旧插件版本。新版设置使用 Config `.volatile()`，每次操作读取当前值；凭据刷新订阅 `credentials/reference-updated`。
 
 ---
 
@@ -280,7 +285,7 @@ Cloudflare 的 token 需要 `Edit Cloudflare Workers` 权限；也可以不配 t
 <details>
 <summary><b>发布到 npm 卡在 OTP？</b></summary>
 
-你的账号开了 2FA。改用 **automation token**，或建 granular token 时勾选 "Bypass two-factor authentication"。建议配短过期时间，发完就撤销。
+你的账号开了 2FA。使用有发布权限的 granular token，并按需勾选 "Bypass two-factor authentication"。建议配短过期时间，发完就撤销。
 </details>
 
 <details>
@@ -297,6 +302,8 @@ Cloudflare 的 token 需要 `Edit Cloudflare Workers` 权限；也可以不配 t
 
 ---
 
+新版迁移与本次验证记录见 [Harness 0.2 兼容报告](docs/HARNESS-0.2-COMPATIBILITY.md)。
+
 ## 从源码开发
 
 ```sh
@@ -304,10 +311,11 @@ git clone https://github.com/Octo-o-o-o/dsh-plugin-deploy.git
 cd dsh-plugin-deploy
 npm install
 node build.mjs                      # 构建 lib/index.js 与 lib/client.js
-node --test tests/*.test.js         # 106 个单元测试
+npm run typecheck
+npm test                           # 118 个测试，执行前自动构建
 
 # 装本地版本调试（路径必须绝对）
-npx @deepseek-ai/dsh plugin --profile web add "$PWD"
+npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add "$PWD"
 ```
 
 结构：
@@ -319,7 +327,7 @@ src/
 ├── mode.ts               # L1/L2 模式判定
 ├── isolated-home.ts      # 临时预览的隔离 HOME
 ├── publish.ts            # 发布编排
-├── publish-checks.ts     # 8 条发布校验
+├── publish-checks.ts     # 9 条发布校验
 ├── redact.ts             # 输出脱敏
 └── client/               # Web UI：设置卡片 + 两个结果卡片
 ```

@@ -1,6 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import { installSettingsSection } from '@deepseek-ai/dsh-settings'
-import { Config, DEPLOY_SETTINGS_NS, type Config as ConfigValue } from './config.ts'
+import { Config, readConfig, type Config as ConfigValue, type RuntimeConfig } from './config.ts'
 import { createPublishCommand, createPublishTool } from './publish-tool.ts'
 import { createDeployCommand, createDeployTool } from './tool.ts'
 
@@ -33,7 +32,9 @@ export {
   ASSET_IGNORE_PATTERNS,
   generatedConfigPath,
   generatedWranglerConfigBody,
+  shellSingleQuote,
 } from './generated-config.ts'
+export { resolveWorkspaceDirectory } from './workspace.ts'
 export {
   parseWranglerAssetsDirectory,
   parseWranglerWorkerName,
@@ -74,17 +75,10 @@ export {
 } from './publish.ts'
 export { createPublishTool, createPublishCommand } from './publish-tool.ts'
 
-export function apply(ctx: Context, config: ConfigValue): void {
-  let source: () => ConfigValue = () => config
-  installSettingsSection(ctx, DEPLOY_SETTINGS_NS, Config, config, {
-    setSource: (current) => {
-      source = current
-    },
-    onChange: () => {},
-  })
-
-  ctx.tools.register(createDeployTool(ctx, () => source()))
-  ctx.tools.register(createPublishTool(ctx, () => source()))
-  ctx.effect(() => ctx.commands.register(createDeployCommand(ctx, () => source())))
-  ctx.effect(() => ctx.commands.register(createPublishCommand(ctx, () => source())))
+export function apply(ctx: Context, config: RuntimeConfig): void {
+  const source = () => readConfig(config)
+  ctx.tools.register(createDeployTool(ctx, source))
+  ctx.tools.register(createPublishTool(ctx, source))
+  ctx.effect(() => ctx.commands.register(createDeployCommand(ctx, source)))
+  ctx.effect(() => ctx.commands.register(createPublishCommand(ctx, source)))
 }

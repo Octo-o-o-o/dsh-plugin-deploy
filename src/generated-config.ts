@@ -34,9 +34,9 @@ export function generatedWranglerConfigBody(
   }, null, 2)}\n`
 }
 
-/** Quote a path for `bash -c` (harness shell runs `bash -c spec.command`). */
-export function shellSingleQuote(value: string): string {
-  return `'${value.replaceAll("'", `'\\''`)}'`
+/** The Host uses PowerShell on Windows and bash on POSIX. */
+export function shellSingleQuote(value: string, platform: string = process.platform): string {
+  return `'${value.replaceAll("'", platform === 'win32' ? "''" : `'\\''`)}'`
 }
 
 /**

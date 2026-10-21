@@ -268,8 +268,9 @@ test('apply registers conversation.session.header.actions with id and order', ()
   const registers = []
   const ctx = {
     get() { return undefined },
-    settingsScope: {
-      bind() {
+    remote: { credentials: undefined, $on: () => () => {} },
+    configForms: {
+      get() {
         return {
           getSnapshot: () => ({ status: 'unavailable', writable: false }),
           subscribe: () => () => {},

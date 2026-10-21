@@ -44,6 +44,7 @@ function createHost(options = {}) {
     },
     shell: {
       resolve(request) { return request },
+      async execute(spec) { return { result: () => this.run(spec) } },
       async run(spec) {
         shellCalls.push(spec)
         if (spec.command === 'wrangler --version') return shellResult('wrangler 4.123.0')
@@ -150,7 +151,10 @@ test('L1 env has isolated HOME and an explicit empty token', async () => {
   assert.equal(deploy.length, 1)
   assert.equal(deploy[0].env?.HOME, L1_ISOLATED_HOME)
   assert.equal(deploy[0].env?.CLOUDFLARE_API_TOKEN, '')
-  assert.equal(deploy[0].env?.XDG_CONFIG_HOME, undefined)
+  assert.equal(deploy[0].env?.XDG_CONFIG_HOME, join(L1_ISOLATED_HOME, '.config'))
+  assert.equal(deploy[0].env?.USERPROFILE, L1_ISOLATED_HOME)
+  assert.equal(deploy[0].env?.APPDATA, join(L1_ISOLATED_HOME, 'AppData', 'Roaming'))
+  assert.equal(deploy[0].env?.LOCALAPPDATA, join(L1_ISOLATED_HOME, 'AppData', 'Local'))
   assert.ok(!Object.values(deploy[0].env ?? {}).includes(TOKEN))
 })
 
@@ -170,7 +174,10 @@ test('authenticated plus explicit temporary uses isolated HOME and empty token',
   assert.match(String(deploy[0].command), /--temporary/)
   assert.equal(deploy[0].env?.HOME, L1_ISOLATED_HOME)
   assert.equal(deploy[0].env?.CLOUDFLARE_API_TOKEN, '')
-  assert.equal(deploy[0].env?.XDG_CONFIG_HOME, undefined)
+  assert.equal(deploy[0].env?.XDG_CONFIG_HOME, join(L1_ISOLATED_HOME, '.config'))
+  assert.equal(deploy[0].env?.USERPROFILE, L1_ISOLATED_HOME)
+  assert.equal(deploy[0].env?.APPDATA, join(L1_ISOLATED_HOME, 'AppData', 'Roaming'))
+  assert.equal(deploy[0].env?.LOCALAPPDATA, join(L1_ISOLATED_HOME, 'AppData', 'Local'))
   assert.ok(!Object.values(deploy[0].env ?? {}).includes(TOKEN))
 })
 

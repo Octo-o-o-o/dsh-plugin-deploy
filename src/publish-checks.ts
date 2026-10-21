@@ -1,6 +1,8 @@
+import { evaluatePluginCompatibility, getDshRuntimeVersion } from '@deepseek-ai/dsh-app-boot'
 import type { PackManifest, PublishAccess, PublishCheck, PublishMode, ScanFinding } from './publish-types.ts'
 
 export const CHECK_IDS = [
+  'dsh-compat',
   'dsh-plugin',
   'patch-in-pack',
   'client-bundle',
@@ -34,6 +36,7 @@ export interface PackageJsonLike {
   devDependencies?: unknown
   peerDependencies?: unknown
   optionalDependencies?: unknown
+  engines?: unknown
   dsh?: unknown
 }
 
@@ -52,6 +55,7 @@ export interface EvaluateChecksInput {
   versionQuery: VersionQuery
   scan: { skipped: true } | { skipped: false; findings: ScanFinding[]; error?: string }
   mode: PublishMode
+  runtimeVersion?: string
 }
 
 export function normalizePackPath(path: string): string {
@@ -179,6 +183,18 @@ export function evaluateChecks(input: EvaluateChecksInput): PublishCheck[] {
   const version = typeof pkg.version === 'string' ? pkg.version : ''
   const paths = packPathSet(pack.files)
   const checks: PublishCheck[] = []
+
+  const runtimeVersion = input.runtimeVersion ?? getDshRuntimeVersion()
+  try {
+    const issue = evaluatePluginCompatibility(pkg, {}, runtimeVersion)
+    checks.push(check('dsh-compat', issue === undefined,
+      issue === undefined
+        ? `兼容当前 Harness ${runtimeVersion}。`
+        : `不兼容当前 Harness ${runtimeVersion}：${JSON.stringify(issue.requirements)}。请更新 engines.dsh 与 DSH peer 范围并验证 API。`,
+      mode))
+  } catch (error) {
+    checks.push(check('dsh-compat', false, `兼容声明无效：${error instanceof Error ? error.message : String(error)}`, mode))
+  }
 
   const patch = dshBundlePatch(pkg)
   if (patch === undefined) {

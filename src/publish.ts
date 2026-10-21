@@ -1,9 +1,9 @@
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
-import { basename, isAbsolute, join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import { DEFAULT_NPM_TOKEN_ENV, type Config } from './config.ts'
-import type { CredentialsLike, DeployHost } from './deploy.ts'
+import { runShell, type CredentialsLike, type DeployHost } from './deploy.ts'
 import { shellSingleQuote } from './generated-config.ts'
 import {
   blockingFailures,
@@ -30,6 +30,7 @@ import type {
   ScanFinding,
 } from './publish-types.ts'
 import { redactSecrets } from './redact.ts'
+import { resolveWorkspaceDirectory } from './workspace.ts'
 
 const PROBE_TIMEOUT_MS = 45_000
 const SCAN_TIMEOUT_MS = 90_000
@@ -94,19 +95,6 @@ function combineOutput(result: { stdout: { text: string }; stderr: { text: strin
   return [result.stdout.text, result.stderr.text].filter(text => text.length > 0).join('\n')
 }
 
-function sessionCwd(exec: PublishExec): string | undefined {
-  const agent = exec.agent as { session?: { header?: { cwd?: string } } } | undefined
-  const cwd = agent?.session?.header?.cwd
-  return typeof cwd === 'string' && cwd.length > 0 ? cwd : undefined
-}
-
-function resolveDirectory(args: PublishArgs, exec: PublishExec): string {
-  const requested = args.directory?.trim()
-  const base = sessionCwd(exec) ?? process.cwd()
-  if (requested === undefined || requested.length === 0) return base
-  return isAbsolute(requested) ? requested : join(base, requested)
-}
-
 async function pathExists(path: string): Promise<boolean> {
   try {
     await stat(path)
@@ -132,7 +120,7 @@ export async function runPublish(
     return fail({ mode: 'check', error: `不支持的 mode=${String(mode)}。` })
   }
 
-  const directory = resolveDirectory(args, exec)
+  const directory = resolveWorkspaceDirectory(ctx, args.directory, exec.agent)
   try {
     await ctx.subprocess.resolveExecutable('npm', undefined, exec.signal)
   } catch {
@@ -179,13 +167,13 @@ export async function runPublish(
   }
 
   const cacheFlag = npmCacheFlag(NPM_CACHE_DIR)
-  const dryRun = await ctx.shell.run(ctx.shell.resolve({
-    command: `npm pack --dry-run --json ${cacheFlag}`,
+  const dryRun = await runShell(ctx.shell, {
+    command: `npm pack --dry-run --json --ignore-scripts ${cacheFlag}`,
     workdir: directory,
     timeoutMs: PROBE_TIMEOUT_MS,
     signal: exec.signal,
     stdoutMaxBytes: 2_000_000,
-  }))
+  })
   const dryCombined = combineOutput(dryRun)
   if (dryRun.timedOut || dryRun.aborted || dryRun.exitCode !== 0) {
     return fail({
@@ -232,13 +220,13 @@ export async function runPublish(
     }
   }
 
-  const view = await ctx.shell.run(ctx.shell.resolve({
+  const view = await runShell(ctx.shell, {
     command: `npm view ${shellSingleQuote(packageName)} versions --json ${cacheFlag}`,
     workdir: directory,
     timeoutMs: PROBE_TIMEOUT_MS,
     signal: exec.signal,
     stdoutMaxBytes: 2_000_000,
-  }))
+  })
   const viewCombined = combineOutput(view)
   const versionQuery: VersionQuery = view.timedOut
     ? { status: 'error', detail: 'npm view 超时。' }
@@ -251,13 +239,13 @@ export async function runPublish(
   if (!await pathExists(scanScript)) {
     scan = { skipped: true }
   } else {
-    const scanned = await ctx.shell.run(ctx.shell.resolve({
+    const scanned = await runShell(ctx.shell, {
       command: `bash ${shellSingleQuote(scanScript)} --json --all .`,
       workdir: directory,
       timeoutMs: SCAN_TIMEOUT_MS,
       signal: exec.signal,
       stdoutMaxBytes: 2_000_000,
-    }))
+    })
     const scannedText = combineOutput(scanned)
     if (scanned.timedOut) {
       scan = { skipped: false, findings: [], error: '扫描器超时。' }
@@ -338,13 +326,13 @@ export async function runPublish(
       })
     }
     const destFlag = `--pack-destination ${shellSingleQuote(PACK_DEST_DIR)}`
-    const packed = await ctx.shell.run(ctx.shell.resolve({
-      command: `npm pack --json ${destFlag} ${cacheFlag}`,
+    const packed = await runShell(ctx.shell, {
+      command: `npm pack --json --ignore-scripts ${destFlag} ${cacheFlag}`,
       workdir: directory,
       timeoutMs: PROBE_TIMEOUT_MS,
       signal: exec.signal,
       stdoutMaxBytes: 2_000_000,
-    }))
+    })
     const packedText = redactSecrets(combineOutput(packed))
     if (packed.timedOut || packed.aborted || packed.exitCode !== 0) {
       return fail({
@@ -411,7 +399,7 @@ export async function runPublish(
     return fail({
       ...base,
       error: `未配置 npm token 引用 ${refName}。`,
-      hint: '在插件设置里写入 token（只存引用名；值走凭据服务）。请使用 automation token，避免 2FA/OTP 挑战。',
+      hint: '在插件设置里写入 token（只存引用名；值走凭据服务）。请使用有发布权限的 granular token，按需配置 Bypass 2FA。',
     })
   }
 
@@ -455,7 +443,7 @@ export async function runPublish(
     return fail({
       ...base,
       error: '凭据引用已配置，但未能读到值。',
-      hint: '请重新写入 npm token（建议 automation token）。',
+      hint: '请重新写入有发布权限的 npm granular token。',
     })
   }
 
@@ -470,20 +458,20 @@ export async function runPublish(
       ? ` --access ${accessDecision.access}`
       : ''
     const command = [
-      'npm publish',
+      'npm publish --ignore-scripts',
       `--userconfig ${shellSingleQuote(npmrcPath)}`,
       cacheFlag,
       `--tag ${shellSingleQuote(tag)}`,
     ].join(' ') + accessFlag
 
-    const published = await ctx.shell.run(ctx.shell.resolve({
+    const published = await runShell(ctx.shell, {
       command,
       workdir: directory,
       timeoutMs: PUBLISH_TIMEOUT_MS,
       signal: exec.signal,
       stdoutMaxBytes: 2_000_000,
       env: { DSH_NPM_TOKEN: token },
-    }))
+    })
     const publishedText = redactSecrets(combineOutput(published), [token])
     let publishedJson: unknown
     try {
@@ -508,7 +496,7 @@ export async function runPublish(
         return fail({
           ...base,
           error: 'npm 要求一次性密码（OTP / 2FA），非交互环境不能继续。',
-          hint: '请改用 automation token（不受 2FA 挑战），不要在对话或工具参数里粘贴 token。',
+          hint: '请使用获准绕过 2FA 且有发布权限的 granular token；不要在对话或工具参数里粘贴 token。',
           stdout: publishedText,
           ...published.exitCode === null ? {} : { exitCode: published.exitCode },
         })
@@ -517,7 +505,7 @@ export async function runPublish(
         return fail({
           ...base,
           error: 'npm 未认证（E401）。',
-          hint: '请检查设置里的 npm token 引用是否指向有效的 automation token。',
+          hint: '请检查设置里的 npm token 引用是否指向有效且有发布权限的 granular token。',
           stdout: publishedText,
           ...published.exitCode === null ? {} : { exitCode: published.exitCode },
         })

@@ -39,7 +39,7 @@ const GOOD_PKG = {
     bundle: { patch: './cordis.patch.yml' },
     client: { platform: 'web' },
   },
-  peerDependencies: { '@deepseek-ai/dsh-tools': '0.1.0-rc.7' },
+  peerDependencies: { '@deepseek-ai/dsh-tools': '>=0.2.1-rc.2 <0.3.0-0' },
 }
 
 const GOOD_CLIENT = [
@@ -133,7 +133,7 @@ test('isOldDshTrain only matches 0.0.x specs', () => {
 test('evaluateChecks passes a compliant plugin', () => {
   const checks = evaluateChecks(baseInput())
   const map = byId(checks)
-  assert.equal(checks.length, 8)
+  assert.equal(checks.length, 9)
   for (const item of checks) assert.equal(item.ok, true, item.id)
   assert.equal(map['version-available'].blocking, false)
   assert.equal(map.scan.detail.includes('已跳过'), true)

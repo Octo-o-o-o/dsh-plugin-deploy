@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutlineMedium } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { DeploySettingsState } from './card-controller.ts'
 
 export const CARD_TITLE = 'Cloudflare 部署'
@@ -13,6 +13,7 @@ export interface SettingsCardProps {
   setNpmTokenEnvDraft: (value: string) => void
   saveNpmTokenEnv: () => Promise<void>
   saveNpmTokenValue: (value: string) => Promise<void>
+  saveReferences?: () => Promise<void>
 }
 
 function cx(...parts: Array<string | false | undefined | null>): string {
@@ -21,8 +22,8 @@ function cx(...parts: Array<string | false | undefined | null>): string {
 
 function Chevron(props: { open: boolean }) {
   const className = cx('dpd-chevron', props.open && 'dpd-chevron-open')
-  if (typeof IconChevronDownOutline14 === 'function') {
-    return <IconChevronDownOutline14 className={className} />
+  if (typeof IconChevronDownOutlineMedium === 'function') {
+    return <IconChevronDownOutlineMedium className={className} />
   }
   return <span className={cx(className, 'dpd-chevron-fallback')} aria-hidden="true" />
 }
@@ -82,8 +83,11 @@ export function DeploySettingsCard(props: SettingsCardProps) {
     setSaving(true)
     setFailed(false)
     try {
-      if (state.tokenEnvDraft !== state.tokenEnv) await props.saveTokenEnv()
-      if (state.npmTokenEnvDraft !== state.npmTokenEnv) await props.saveNpmTokenEnv()
+      if (props.saveReferences !== undefined) await props.saveReferences()
+      else {
+        if (state.tokenEnvDraft !== state.tokenEnv) await props.saveTokenEnv()
+        if (state.npmTokenEnvDraft !== state.npmTokenEnv) await props.saveNpmTokenEnv()
+      }
       if (tokenDraft.length > 0) {
         const value = tokenDraft
         await props.saveTokenValue(value)
@@ -102,7 +106,7 @@ export function DeploySettingsCard(props: SettingsCardProps) {
   }
 
   return (
-    <li className={cx('dpd-card', open && 'dpd-card-open')}>
+    <article className={cx('dpd-card', open && 'dpd-card-open')}>
       <button
         type="button"
         className="dpd-header"
@@ -132,7 +136,7 @@ export function DeploySettingsCard(props: SettingsCardProps) {
                 id="dpd-api-token-env"
                 className="dpd-input"
                 value={state.tokenEnvDraft}
-                disabled={!state.scopeWritable}
+                disabled={!state.scopeWritable || saving}
                 onChange={event => props.setTokenEnvDraft(event.target.value)}
                 spellCheck={false}
               />
@@ -148,7 +152,7 @@ export function DeploySettingsCard(props: SettingsCardProps) {
                 className="dpd-input"
                 type="password"
                 autoComplete="off"
-                disabled={!state.writable}
+                disabled={!state.writable || saving}
                 value={tokenDraft}
                 placeholder="粘贴 token，保存后清空"
                 onChange={event => setTokenDraft(event.target.value)}
@@ -157,13 +161,13 @@ export function DeploySettingsCard(props: SettingsCardProps) {
             <Field
               id="dpd-npm-token-env"
               label="npm token 引用名"
-              hint="默认 NPM_TOKEN。发布请用 automation token，避免 OTP/2FA 卡住。"
+              hint="默认 NPM_TOKEN。使用有发布权限的 granular token，按需允许绕过 2FA。"
             >
               <input
                 id="dpd-npm-token-env"
                 className="dpd-input"
                 value={state.npmTokenEnvDraft}
-                disabled={!state.scopeWritable}
+                disabled={!state.scopeWritable || saving}
                 onChange={event => props.setNpmTokenEnvDraft(event.target.value)}
                 spellCheck={false}
               />
@@ -179,7 +183,7 @@ export function DeploySettingsCard(props: SettingsCardProps) {
                 className="dpd-input"
                 type="password"
                 autoComplete="off"
-                disabled={!state.npmWritable}
+                disabled={!state.npmWritable || saving}
                 value={npmTokenDraft}
                 placeholder="粘贴 token，保存后清空"
                 onChange={event => setNpmTokenDraft(event.target.value)}
@@ -209,6 +213,6 @@ export function DeploySettingsCard(props: SettingsCardProps) {
           </div>
         )
         : null}
-    </li>
+    </article>
   )
 }

@@ -8,8 +8,8 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/dsh-plugin-deploy"><img alt="npm" src="https://img.shields.io/npm/v/dsh-plugin-deploy?color=cb3837&logo=npm" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
-  <a href="https://deepseek-harness.github.io/deepseek-harness/"><img alt="harness" src="https://img.shields.io/badge/harness-0.1.0--rc.7-4c1?logo=deepseek" /></a>
-  <img alt="tests" src="https://img.shields.io/badge/tests-106%20passed-brightgreen" />
+  <a href="https://deepseek-harness.github.io/deepseek-harness/"><img alt="harness" src="https://img.shields.io/badge/harness-0.2.1--rc.2-4c1?logo=deepseek" /></a>
+  <img alt="tests" src="https://img.shields.io/badge/tests-118%20passed-brightgreen" />
   <img alt="tracks" src="https://img.shields.io/badge/track-Host%20%2B%20Web%20UI-8957e5" />
   <a href="https://dsh.pub/en/plugins/?q=Octo-o-o-o%2Fdsh-plugin-deploy"><img alt="dsh.pub" src="https://dsh.pub/api/badges/Octo-o-o-o/dsh-plugin-deploy.svg" /></a>
 </p>
@@ -46,7 +46,7 @@ Your agent just wrote a site, a Worker, a plugin — and then you hit the last m
 |---|---|---|
 | Put a page online to look at it | sign up → create project → install wrangler → write config → debug auth | say "ship it", get a URL |
 | Deploy to your own account | handle auth state and `wrangler.jsonc` every time | store a credential *reference* once, then one sentence |
-| Publish a dsh plugin you built | manually check 8 failure points → `npm pack` → `npm publish` hits 2FA | one command; it refuses to publish if checks fail |
+| Publish a dsh plugin you built | check 9 failure points → `npm pack` → `npm publish` hits 2FA | one command; it refuses to publish if checks fail |
 
 And it does not trade away safety for convenience: tokens never enter the conversation or the log, and every outward action needs your explicit approval.
 
@@ -56,10 +56,10 @@ And it does not trade away safety for convenience: tokens never enter the conver
 
 ```sh
 # Install into your dsh profile (pnpm must be on PATH)
-npx @deepseek-ai/dsh plugin --profile web add dsh-plugin-deploy
+npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.0
 
 # Boot
-npx @deepseek-ai/dsh web
+npx @deepseek-ai/dsh@0.2.1-rc.2 web
 ```
 
 Then just say:
@@ -72,7 +72,7 @@ That's it. **No account required the first time** — the plugin uses a Cloudfla
 > Requires [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0 locally (the version that supports temporary previews). If it is missing, the plugin tells you how to install it instead of failing silently.
 
 > [!TIP]
-> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.1.4`.
+> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.2.0`.
 
 ---
 
@@ -103,7 +103,7 @@ The plugin is careful with wording: a temporary preview is always called a *temp
 Tool `publish_plugin`, slash command `/publish-plugin`. This one is for **plugin authors**.
 
 ```sh
-check   # verify only, zero side effects (default)
+check   # verify only; no package scripts or project writes (default)
 pack    # verified → produce a .tgz
 npm     # verified + your approval → publish to npm
 ```
@@ -114,6 +114,7 @@ Plenty of plugins in the wild install but never activate, or publish with files 
 
 | Check | What it catches |
 |---|---|
+| `dsh-compat` | Uses the running host’s compatibility rules for `engines.dsh` or DSH peers before packaging/publishing |
 | `dsh-plugin` | missing `dsh.bundle.patch` → installs but never activates (one stderr warning is your only clue) |
 | `patch-in-pack` | patch file not in the npm tarball → same failure, even quieter |
 | `client-bundle` | `lib/client.js` is not a factory bundle, or its id ≠ package name → `loaded without registering` in the browser |
@@ -125,12 +126,14 @@ Plenty of plugins in the wild install but never activate, or publish with files 
 
 **If any check fails, neither `pack` nor `npm` runs** (fail closed).
 
+Checks, packing, and publishing skip package lifecycle scripts. Build your release artifacts before invoking the tool.
+
 ### About npm tokens
 
 npm does **not** read tokens from environment variables. The plugin writes a temporary `.npmrc` containing only the reference `${DSH_NPM_TOKEN}`, passes the real value through the process environment, and deletes the file afterwards. **Your `~/.npmrc` is never touched and the token never lands on disk.**
 
 > [!TIP]
-> With 2FA enabled, an ordinary token stalls on the OTP prompt. Use an **automation token**, or a granular token with "Bypass 2FA" — set a short expiry and revoke it when you are done.
+> With 2FA enabled, an ordinary token stalls on the OTP prompt. Use a granular token with publish permissions and, when needed, "Bypass 2FA" — set a short expiry and revoke it when you are done. See [npm access tokens](https://docs.npmjs.com/about-access-tokens/).
 
 ---
 
@@ -158,7 +161,7 @@ Result cards also carry **Redeploy** / **Re-check** buttons on the same path.
 
 ## Configuring credentials
 
-**Settings → Plugins → Plugin configuration**, then expand the **Cloudflare deploy** card (it matches the built-in Terminal / Agent loop / Web search cards: collapsed by default, click the title to open):
+Open **Plugins → Installed → dsh-plugin-deploy**, then expand the **Cloudflare deploy** card:
 
 | Field | What goes in | Note |
 |---|---|---|
@@ -206,7 +209,7 @@ Stated plainly:
 - **stderr is capped at 64 KB** (harness exposes no `stderrMaxBytes`), so extreme diagnostics may truncate.
 - **Publishing covers npm and tarball only.** GitHub installs and [dsh.pub](https://dsh.pub) listing are pointed at, never performed for you.
 - **Not verified on TUI / headless profiles.** Fail-closed by construction, but without a live run to prove it.
-- Requires dsh **`0.1.2-rc.1` and later**. The client half imports `ClientContext` from `@deepseek-ai/cordis`. Credential refresh listens to `credentials/reference-updated`.
+- Requires dsh **`>=0.2.1-rc.2 <0.3.0-0`**; tested with `0.2.1-rc.2`. Keep an older plugin for Harness `0.1.x`. Settings use live Config fields and credentials use `credentials/reference-updated`.
 
 ---
 
@@ -233,7 +236,7 @@ No. Temp wrangler configs, tarballs, and npm cache all live in the system temp d
 <details>
 <summary><b>npm publish stalls on OTP.</b></summary>
 
-Your account has 2FA. Use an automation token, or a granular token with "Bypass two-factor authentication". Prefer a short expiry and revoke after use.
+Your account has 2FA. Use a granular token with publish permissions and, when needed, "Bypass two-factor authentication". Prefer a short expiry and revoke after use.
 </details>
 
 <details>
@@ -257,9 +260,10 @@ git clone https://github.com/Octo-o-o-o/dsh-plugin-deploy.git
 cd dsh-plugin-deploy
 npm install
 node build.mjs                      # builds lib/index.js and lib/client.js
-node --test tests/*.test.js         # 106 unit tests
+npm run typecheck
+npm test                           # 118 tests; builds first
 
-npx @deepseek-ai/dsh plugin --profile web add "$PWD"   # absolute path required
+npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add "$PWD"   # absolute path required
 ```
 
 The browser artifact must be dsh's lazy-CJS factory bundle (`window.__ModuleLoader__.load({id, factory})`). `build.mjs` already wires banner + intro + footer — **all three are required**; dropping the intro throws `module is not defined` in the browser.
