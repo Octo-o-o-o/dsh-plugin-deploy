@@ -3,7 +3,18 @@
   "assistantVersion": "0.1.0",
   "source": "~/WorkSpace/DshPluginAssistant",
   "installedAt": "2026-09-04T06:01:17Z",
-  "harness": { "version": "0.1.2-rc.1", "commit": "76fda729799fe9b3848dbe2c211d4b231032b81e", "commitDate": "2026-09-03" },
-  "refresh": "bash ~/WorkSpace/DshPluginAssistant/tools/install-into.sh .",
-  "layout": { "skills": [".agents/skills/dsh-plugin-*", ".claude/skills/dsh-plugin-*"], "hooks": ".dsh-assistant/hooks/", "reference": ".dsh-assistant/reference/" }
+  "harness": {
+    "version": "0.2.1-rc.2",
+    "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+    "commitDate": "2026-10-17T15:22:43+08:00"
+  },
+  "refresh": "node tools/gen-harness-facts.mjs --repo <harness-clone> --ref <commit> --out .dsh-assistant/reference --npm",
+  "layout": {
+    "skills": [
+      ".agents/skills/dsh-plugin-*",
+      ".claude/skills/dsh-plugin-*"
+    ],
+    "hooks": ".dsh-assistant/hooks/",
+    "reference": ".dsh-assistant/reference/"
+  }
 }

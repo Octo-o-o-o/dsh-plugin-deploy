@@ -55,6 +55,7 @@ function createHost(options = {}) {
     },
     shell: {
       resolve(request) { return request },
+      async execute(spec) { return { result: () => this.run(spec) } },
       async run(spec) {
         shellCalls.push(spec)
         const command = String(spec.command)
@@ -120,7 +121,7 @@ async function writePlugin(prefix, extra = {}) {
       bundle: { patch: './cordis.patch.yml' },
       client: { platform: 'web' },
     },
-    peerDependencies: { '@deepseek-ai/dsh-tools': '0.1.0-rc.7' },
+    peerDependencies: { '@deepseek-ai/dsh-tools': '>=0.2.1-rc.2 <0.3.0-0' },
     ...extra.pkg,
   }
   await writeFile(join(dir, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`)
@@ -141,6 +142,16 @@ async function runOn(host, directory, args = {}) {
 function commandsOf(shellCalls) {
   return shellCalls.map(item => String(item.command))
 }
+
+test('checking a package does not execute its lifecycle scripts', async () => {
+  const dir = await writePlugin('no-lifecycle', { pkg: { scripts: { prepack: 'exit 99' } } })
+  const { host, shellCalls } = createHost({ credentials: 'none' })
+  const result = await runOn(host, dir)
+  assert.equal(result.ok, true)
+  const commands = commandsOf(shellCalls).filter(command => command.startsWith('npm pack'))
+  assert.ok(commands.length > 0)
+  assert.ok(commands.every(command => command.includes('--ignore-scripts')))
+})
 
 test('parsePublishCommandInput accepts mode then directory', () => {
   assert.deepEqual(parsePublishCommandInput(''), {})
@@ -166,7 +177,7 @@ test('check mode does not pack or publish', async () => {
   assert.equal(result.ok, true, result.error)
   assert.equal(result.mode, 'check')
   assert.equal(result.packageName, 'dsh-plugin-fixture')
-  assert.equal(result.checks.length, 8)
+  assert.equal(result.checks.length, 9)
   assert.equal(result.tarballPath, undefined)
   assert.ok(commandsOf(shellCalls).some(item => item.includes('npm pack --dry-run')))
   assert.equal(commandsOf(shellCalls).some(item => item.includes('--pack-destination')), false)
@@ -285,7 +296,7 @@ test('npm publish uses isolated npmrc interpolation and env token', async () => 
   assert.equal(commandsOf(shellCalls).some(item => item.includes('npm pack --json') && !item.includes('dry-run')), false)
 })
 
-test('OTP challenge fails closed with automation-token hint', async () => {
+test('OTP challenge fails closed with granular-token hint', async () => {
   const dir = await writePlugin('pub-otp')
   const { host, counts } = createHost({
     credentials: 'configured',
@@ -294,7 +305,7 @@ test('OTP challenge fails closed with automation-token hint', async () => {
   const result = await runOn(host, dir, { mode: 'npm' })
   assert.equal(result.ok, false)
   assert.match(result.error ?? '', /OTP|一次性密码/)
-  assert.match(result.hint ?? '', /automation token/)
+  assert.match(result.hint ?? '', /granular token/)
   assert.equal(counts.resolve, 1)
   assert.equal((result.stdout ?? '').includes(TOKEN), false)
 })

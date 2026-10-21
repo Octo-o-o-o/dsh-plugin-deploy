@@ -42,7 +42,7 @@ const stubs = {
   '@deepseek-ai/dsh-client-ui-slots': {},
   '@deepseek-ai/dsh-client-web-react': {},
   '@deepseek-ai/dsh-client-ui-primitives': {
-    IconChevronDownOutline14(props) { return { type: 'svg', props } },
+    IconChevronDownOutlineMedium(props) { return { type: 'svg', props } },
   },
   '@deepseek-ai/dsh-client-ui-attachment': {},
   '@deepseek-ai/dsh-client-schema-form': {},
@@ -164,11 +164,11 @@ function buttonByClass(tree, className) {
   return findNodes(tree, node => node.type === 'button' && node.props?.className === className)[0]
 }
 
-test('settings card is an li and starts collapsed', () => {
+test('settings card is an article and starts collapsed', () => {
   resetHookMemory()
   const card = makeCard()
   const tree = card.render()
-  assert.equal(tree.type, 'li')
+  assert.equal(tree.type, 'article')
   assert.match(tree.props.className, /\bdpd-card\b/)
   assert.equal(/\bdpd-card-open\b/.test(tree.props.className), false)
   const toggle = header(tree)
@@ -301,7 +301,7 @@ test('read-only scope shows a status line and disables ref inputs', () => {
   assert.equal(inputById(tree, 'dpd-npm-token-env').props.disabled, true)
 })
 
-test('client factory injects prefixed card css once', () => {
+test('client apply owns CSS and removes it on disposal', () => {
   const styles = []
   const document = {
     querySelector(sel) {
@@ -309,7 +309,7 @@ test('client factory injects prefixed card css once', () => {
       return styles.find(el => el.dataset.pluginCss === 'dsh-plugin-deploy') ?? null
     },
     createElement() {
-      return { dataset: {}, textContent: '' }
+      return { dataset: {}, textContent: '', remove() { styles.splice(styles.indexOf(this), 1) } }
     },
     head: {
       appendChild(el) {
@@ -319,6 +319,15 @@ test('client factory injects prefixed card css once', () => {
     },
   }
   const loaded = loadClientExports({ document })
+  assert.equal(styles.length, 0)
+  const disposers = []
+  const ctx = {
+    configForms: { get: () => ({ getSnapshot: () => ({ status: 'unavailable', writable: false }), subscribe: () => () => {} }) },
+    remote: { credentials: undefined, $on: () => () => {} },
+    slots: { inject() {} },
+    effect(fn) { disposers.push(fn()) },
+  }
+  loaded.exports.apply(ctx)
   assert.equal(styles.length, 1)
   assert.equal(styles[0].dataset.pluginCss, 'dsh-plugin-deploy')
   const css = styles[0].textContent
@@ -335,6 +344,6 @@ test('client factory injects prefixed card css once', () => {
   assert.match(css, /--dsw-alias-bg-module-platform/)
   assert.match(css, /--dsw-alias-label-error/)
   assert.equal(loaded.exports.name, 'dsh-plugin-deploy')
-  loadClientExports({ document })
-  assert.equal(styles.length, 1)
+  for (const dispose of disposers.reverse()) dispose()
+  assert.equal(styles.length, 0)
 })

@@ -1,24 +1,19 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
+import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
+import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-ui-tool/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { ComposerActionButton } from './ActionButton.tsx'
-import { DeployCardController, type CredentialsWire, type SettingsScopeLike } from './card-controller.ts'
+import { DeployCardController } from './card-controller.ts'
 import { PLUGIN_CSS } from './card-styles.ts'
 import { DeploySettingsCard } from './SettingsCard.tsx'
 import { DeployToolView } from './DeployView.tsx'
 import { PublishToolView } from './PublishView.tsx'
 
-if (typeof document !== 'undefined'
-    && document.querySelector('style[data-plugin-css="dsh-plugin-deploy"]') === null) {
-  const tag = document.createElement('style')
-  tag.dataset.pluginCss = 'dsh-plugin-deploy'
-  tag.textContent = PLUGIN_CSS
-  document.head.appendChild(tag)
-}
-
 export { DeployToolView, PublishToolView, ComposerActionButton, DeploySettingsCard }
+export { DeployCardController } from './card-controller.ts'
 export {
   DEPLOY_PROMPT,
   PUBLISH_CHECK_PROMPT,
@@ -28,16 +23,23 @@ export {
 
 export const name = 'dsh-plugin-deploy'
 
-export const inject = ['slots', 'connection', 'remote', 'settingsScope']
+export const inject = ['slots', 'remote', 'remote.credentials', 'configForms']
 
 export function apply(ctx: ClientContext): void {
-  const connection = ctx.get('connection') as { api?: { credentials?: CredentialsWire } } | undefined
-  const scope = ctx.settingsScope.bind({ namespace: 'deploy' }) as SettingsScopeLike
-  const card = new DeployCardController(scope, connection?.api?.credentials)
+  ctx.effect(() => {
+    if (typeof document === 'undefined') return () => {}
+    const tag = document.createElement('style')
+    tag.dataset.pluginCss = name
+    tag.textContent = PLUGIN_CSS
+    document.head.appendChild(tag)
+    return () => tag.remove()
+  })
+  const card = new DeployCardController(ctx.configForms.get('dsh-plugin-deploy'), ctx.remote.credentials)
+  ctx.effect(() => () => card.dispose())
 
-  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
-    name: 'settings.plugin.item',
-    key: 'deploy',
+  ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
+    name: 'plugins.bundle.config',
+    key: name,
     inject: () => card.inject(),
   }, DeploySettingsCard))
 
@@ -61,9 +63,5 @@ export function apply(ctx: ClientContext): void {
     label: '发布',
   }, ComposerActionButton))
 
-  const remote = ctx.get('remote') as { $on?: (event: string, listener: (ref: string) => void) => () => void } | undefined
-  if (remote?.$on !== undefined) {
-    const refresh = (ref: string): void => { card.refreshCredential(ref) }
-    ctx.effect(() => remote.$on!('credentials/reference-updated', refresh))
-  }
+  ctx.effect(() => ctx.remote.$on('credentials/reference-updated', (ref: string) => card.refreshCredential(ref)))
 }

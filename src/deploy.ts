@@ -1,6 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises'
-import { dirname, isAbsolute, join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
+import type { ShellExecutor } from '@deepseek-ai/dsh-shell'
 import { checkTemporaryAssetLimits } from './assets.ts'
 import { DEFAULT_API_TOKEN_ENV, type Config } from './config.ts'
 import { detectProject, projectFromChoice, type DetectedProject, type ProjectKind } from './detect.ts'
@@ -25,6 +26,7 @@ import {
 import { isAuthenticatedWhoami } from './whoami.ts'
 import { deriveWorkerName, workerNameFromPreviewUrl } from './worker-name.ts'
 import { readWranglerWorkerName, resolveWranglerAssetsRoot } from './wrangler-config.ts'
+import { resolveWorkspaceDirectory } from './workspace.ts'
 
 const DEPLOY_TIMEOUT_MS = 300_000
 const PROBE_TIMEOUT_MS = 30_000
@@ -38,22 +40,11 @@ const TERMS_URLS = [
 const L2_LOGIN_SANDBOX_HINT =
   '默认 workspace-write 沙箱可能读不到本机 wrangler login。请在插件设置里配置 API token（推荐），或在更宽的权限模式下运行。'
 
-export interface ShellLike {
-  resolve(request: {
-    command: string
-    workdir?: string
-    timeoutMs?: number
-    signal?: AbortSignal
-    env?: Record<string, string>
-    stdoutMaxBytes?: number
-  }): unknown
-  run(spec: unknown): Promise<{
-    exitCode: number | null
-    timedOut: boolean
-    aborted: boolean
-    stdout: { text: string }
-    stderr: { text: string }
-  }>
+export type ShellLike = Pick<ShellExecutor, 'resolve' | 'execute'>
+
+/** Harness 0.2 foreground execution is the result projection of a managed handle. */
+export async function runShell(shell: ShellLike, request: Parameters<ShellLike['resolve']>[0]) {
+  return (await shell.execute(shell.resolve(request))).result()
 }
 
 /** Optional credentials seam: `describe` never returns the value. */
@@ -102,19 +93,6 @@ function fail(partial: Omit<DeployResult, 'ok' | 'warnings'> & { warnings?: stri
 
 function combineOutput(result: { stdout: { text: string }; stderr: { text: string } }): string {
   return [result.stdout.text, result.stderr.text].filter(text => text.length > 0).join('\n')
-}
-
-function sessionCwd(exec: DeployExec): string | undefined {
-  const agent = exec.agent as { session?: { header?: { cwd?: string } } } | undefined
-  const cwd = agent?.session?.header?.cwd
-  return typeof cwd === 'string' && cwd.length > 0 ? cwd : undefined
-}
-
-function resolveDirectory(args: DeployArgs, exec: DeployExec): string {
-  const requested = args.directory?.trim()
-  const base = sessionCwd(exec) ?? process.cwd()
-  if (requested === undefined || requested.length === 0) return base
-  return isAbsolute(requested) ? requested : join(base, requested)
 }
 
 function selectedLabel(
@@ -199,20 +177,20 @@ export async function runDeploy(
     })
   }
 
-  const versionRun = await ctx.shell.run(ctx.shell.resolve({
+  const versionRun = await runShell(ctx.shell, {
     command: 'wrangler --version',
     timeoutMs: PROBE_TIMEOUT_MS,
     signal: exec.signal,
-  }))
+  })
   const version = parseWranglerVersion(combineOutput(versionRun))
   const wranglerSupportsTemporary = version !== undefined
     && isWranglerVersionAtLeast(version, MIN_TEMPORARY_WRANGLER)
 
-  const whoRun = await ctx.shell.run(ctx.shell.resolve({
+  const whoRun = await runShell(ctx.shell, {
     command: 'wrangler whoami',
     timeoutMs: PROBE_TIMEOUT_MS,
     signal: exec.signal,
-  }))
+  })
   const authenticated = isAuthenticatedWhoami(whoRun.exitCode, combineOutput(whoRun))
 
   const refName = config.apiTokenEnv?.trim() || DEFAULT_API_TOKEN_ENV
@@ -248,7 +226,7 @@ export async function runDeploy(
     })
   }
 
-  const directory = resolveDirectory(args, exec)
+  const directory = resolveWorkspaceDirectory(ctx, args.directory, exec.agent)
   let project = detectProject(directory)
   if (project === undefined) {
     let answers
@@ -327,7 +305,7 @@ export async function runDeploy(
       agent: exec.agent,
       toolName: 'deploy',
       ...exec.callId === undefined ? {} : { callId: exec.callId },
-      reason: '即将把当前项目发布到 Cloudflare（对外可见）。本次申请不含任何凭据。',
+      reason: `即将把 ${directory} 部署到 Cloudflare（${decision.mode}，对外可见）。本次申请不含任何凭据。`,
       signal: exec.signal,
     })
   } catch (error) {
@@ -402,6 +380,12 @@ export async function runDeploy(
   if (decision.mode === 'temporary') {
     try {
       env.HOME = await ensureL1IsolatedHome()
+      // Node uses USERPROFILE for os.homedir() on Windows; Wrangler can also
+      // consult the platform config directories. Keep all of them isolated.
+      env.USERPROFILE = env.HOME
+      env.XDG_CONFIG_HOME = join(env.HOME, '.config')
+      env.APPDATA = join(env.HOME, 'AppData', 'Roaming')
+      env.LOCALAPPDATA = join(env.HOME, 'AppData', 'Local')
     } catch (error) {
       return fail({
         mode: decision.mode,
@@ -431,14 +415,14 @@ export async function runDeploy(
         'utf8',
       )
     }
-    const runOnce = () => ctx.shell.run(ctx.shell.resolve({
+    const runOnce = () => runShell(ctx.shell, {
       command,
       workdir: deployWorkdir,
       timeoutMs: DEPLOY_TIMEOUT_MS,
       signal: exec.signal,
       stdoutMaxBytes: 2_000_000,
       ...Object.keys(env).length > 0 ? { env } : {},
-    }))
+    })
     const run = assetsAbs === undefined ? await runOnce() : await withAssetsIgnore(assetsAbs, runOnce)
     const redacted = redactSecrets(combineOutput(run), extraSecrets)
     if (run.timedOut) {
