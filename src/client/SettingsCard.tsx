@@ -75,15 +75,24 @@ function CloudflareTokenGuide() {
           选择 <strong>Edit Cloudflare Workers</strong> 模板。
         </li>
         <li>
-          账号资源限定到要部署的 Cloudflare 账号，按项目使用的服务调整权限，并设置有效期。
-          检查摘要后创建 token。
+          将 <strong>Account Resources</strong> 限定到部署使用的账号。
+          项目配置了自定义域名路由时，将 <strong>Zone Resources</strong> 限定到对应站点；
+          不需要路由时，移除 <strong>Workers Routes</strong> 写权限。
+        </li>
+        <li>
+          按项目实际使用的服务保留权限，移除未使用的 KV、R2、Tail 等权限。
+          设置较短有效期，检查权限与资源摘要后创建 token。
         </li>
         <li>
           复制创建后仅显示一次的 token，粘贴到上方的「写入 Cloudflare token」，再点击卡片底部的「保存」。
           引用名通常保留 <code>CLOUDFLARE_API_TOKEN</code>。
         </li>
       </ol>
-      <p>也可以在本机终端运行 <code>wrangler login</code> 使用登录授权；临时预览可先不配置 token。</p>
+      <p>
+        推荐在此配置 API token。本机终端的 <code>wrangler login</code> 登录状态在默认
+        <code> workspace-write </code> 沙箱中可能无法读取；使用该方式前需确认当前权限允许读取登录状态。
+        临时预览可先不配置 token。
+      </p>
       <div className="dpd-guide-links">
         <a href="https://dash.cloudflare.com/profile/api-tokens/" target="_blank" rel="noopener noreferrer">打开 Cloudflare token 管理 ↗</a>
         <a href="https://developers.cloudflare.com/fundamentals/api/get-started/create-token/" target="_blank" rel="noopener noreferrer">官方创建说明 ↗</a>
@@ -105,8 +114,10 @@ function NpmTokenGuide() {
           <strong> Read and write (publish and stage)</strong>。当前插件使用直接发布，stage only 权限无法完成此操作。
         </li>
         <li>
-          设置较短的有效期。需要免交互发布且账号或组织策略允许时，再开启 <strong>Bypass 2FA</strong>；
-          若策略要求每次二次验证，请改在终端交互式发布。
+          本插件以非交互方式直接发布，token 必须开启 <strong>Bypass 2FA</strong>，
+          且账号、组织和包的策略允许使用此类 token。设置较短的有效期。
+          若策略禁止绕过二次验证，请在终端交互式发布，或使用 npm 官方的 staging 流程；
+          当前插件不支持 staging。
         </li>
         <li>
           复制新 token，粘贴到上方的「写入 npm token」并保存。引用名通常保留 <code>NPM_TOKEN</code>。

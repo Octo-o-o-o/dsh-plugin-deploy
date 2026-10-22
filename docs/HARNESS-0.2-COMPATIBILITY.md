@@ -1,6 +1,6 @@
 # Harness 0.2 兼容与验证记录
 
-日期：2026-10-21（Asia/Taipei）。插件发行版本：0.2.0。轨道：Host + Web UI。
+轨道：Host + Web UI。以下按插件版本保留独立验证记录，避免把旧版本制品或截图当作新版本证据。
 
 ## 兼容范围与问题来源
 
@@ -10,7 +10,37 @@
 
 原有 107 项测试通过，但把旧产物导入真实新版运行时会失败：`dsh-settings` 已不再导出 `installSettingsSection`。因此单纯扩展 peer 范围不足以修复。
 
-## 实施内容
+## 0.2.2 候选修订与复验（2026-10-22）
+
+**状态：候选版本，尚未发布到 npm。当前正式版仍是 0.2.1。**
+
+- 核实 [PR #3 的评审反馈](https://github.com/Octo-o-o-o/dsh-plugin-deploy/pull/3#discussion_r4333240286)：设置说明、中英文 README 和 npm 发布失败提示均明确，本插件的非交互式直接发布需要有发布权限且开启 Bypass 2FA 的 granular token，并须符合账号、组织和包的策略。禁止使用此类 token 时，改用终端交互式发布或 npm 官方 staging 流程；插件尚未实现 staging。依据 [npm 直接发布要求](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/#direct-publishing)。
+- Cloudflare 说明补上 Zone Resources 范围：有路由时限制到对应站点，无路由时移除 Workers Routes 写权限；移除未使用的 KV、R2、Tail 等权限。依据 [Cloudflare 模板默认权限](https://developers.cloudflare.com/fundamentals/api/reference/template/)。同时说明默认 `workspace-write` 沙箱可能读不到本机 Wrangler 登录状态，推荐配置 API token。
+- 本机 Node 22 的 118/118 项测试、TypeScript 检查、插件全量扫描和 `git diff --check` 均通过。此次只修改说明和失败提示，没有增加权限或修改发布执行方式。
+- 用本机官方 **Harness 0.2.1-rc.2** 自带 CLI，在独立 `DSH_HOME` 中从最终候选 tarball 安装到全新 web profile；`--dump-config` 包含本 bundle，实际启动后显示 **v0.2.2 / 1 running**。
+- 浏览器中分别展开两个说明，新增权限限制、沙箱限制、Bypass 2FA 要求和替代流程均完整显示，官方链接可见；保存按钮保持禁用。浏览器没有捕获到 warning / error，也没有 `loaded without registering` 或 slot 声明错误。未修改实际 desktop profile 或用户凭据。
+- 对用户再次提到的 #1，另用全新 profile 复验原始的不指定版本安装方式 `dsh plugin --profile <测试 profile> add dsh-plugin-deploy`：成功解析并安装官方 npm **0.2.1**，没有版本不兼容拒绝；registry 的 `latest` 也是 `0.2.1`。这证明当前 macOS 上的默认安装已恢复，不冒充 Windows 桌面版真机验收。#1 在 2026-10-21 已有维护者说明并关闭。
+
+![0.2.2 候选版的 Cloudflare 权限范围与 Wrangler 沙箱说明](evidence/deploy-0.2.2-candidate-cloudflare-guide.png)
+
+![0.2.2 候选版的 npm 直接发布 token 要求](evidence/deploy-0.2.2-candidate-npm-guide.png)
+
+## 0.2.1 发行与桌面版复验（2026-10-21）
+
+- [PR #3](https://github.com/Octo-o-o-o/dsh-plugin-deploy/pull/3) 增加了设置页内的 Cloudflare / npm token 配置说明，已合并到 `main`。源提交 `4e9f83334406e9db2715dbc70058c46d3ad0198d`，合并提交 `2536a05de2e337c8fe8f3aca30c027bcd9825f6e`。
+- [npm 0.2.1](https://www.npmjs.com/package/dsh-plugin-deploy/v/0.2.1) 于 `2026-10-21T05:09:23.577Z` 发布。发行 tarball 与 registry 的 SHA-1 均为 `172c49313deba1a3ad9bed9e1f0101c915989fde`，SHA-512 integrity 也一致。发布当时的 `latest` 已更新到 `0.2.1`。
+- [CI 39547440044](https://github.com/Octo-o-o-o/dsh-plugin-deploy/actions/runs/39547440044) 的 Ubuntu / Node 22、Windows / Node 24 均通过，包含类型检查、每组 118 项测试和插件扫描。
+- 使用官方 Harness **0.2.1-rc.2** 自带 CLI，将实际使用的 `desktop` profile 从本地预览 tarball 切换到官方 npm 的精确版本 `dsh-plugin-deploy@0.2.1`；安装后 7 个文件与发行 tarball 逐字节一致。
+- 重启官方桌面版后，插件详情显示 **v0.2.1**、**1 running**，安装来源为 `dsh-plugin-deploy@0.2.1`；两个配置说明均能展开，创建步骤和官方链接可见。查看说明后保存按钮仍禁用，没有提交配置修改。
+- 安装与重启前后的 profile patch、已有插件 bundle 以及凭据文件均保持一致。仅核验本地显示与安装，不把本次结果记为真实 npm 发布功能、Cloudflare 公网部署或 Windows 桌面 UI 验收。
+
+![官方桌面版通过 npm 安装 0.2.1 后的 token 配置说明](evidence/deploy-0.2.1-cloudflare-guide.png)
+
+## 0.2.0 迁移与验证历史（2026-10-21）
+
+下文中的 tarball、哈希、截图和运行时结果均属于 **0.2.0**。
+
+### 实施内容
 
 | 位置 | 当前行为 |
 | --- | --- |
@@ -29,7 +59,7 @@
 
 保留部署条款确认、一次性审批、凭据只经环境传给子进程、失败关闭及输出脱敏。
 
-## 已取得的本地证据
+### 已取得的本地证据
 
 使用本机已安装的官方桌面版自带 CLI 和运行时，在独立 `DSH_HOME` 中建立测试 profile。未替换用户现有 CLI，也未修改用户正常使用的 desktop profile。
 
@@ -46,7 +76,7 @@
 - TypeScript 检查通过。扫描器会检查所有跟踪文件，跳过 Git 忽略的本机笔记；初始扫描命中的既有内部笔记未被修改或提交。
 - 事实层重新生成：100 个 slot、82 个事件、11 个平台模块、19/19 合同锚点。生成器已随本仓保存，适配了新版源码位置。
 
-## 发布与 registry 复验
+### 发布与 registry 复验
 
 - [PR #2](https://github.com/Octo-o-o-o/dsh-plugin-deploy/pull/2) 已合并；[GitHub Actions](https://github.com/Octo-o-o-o/dsh-plugin-deploy/actions/runs/39535779543) 的 Linux / Node 22、Windows / Node 24 两组均成功，包含类型检查、118 项测试和扫描。
 - [npm 0.2.0](https://www.npmjs.com/package/dsh-plugin-deploy/v/0.2.0) 已于 `2026-10-21T03:03:23.570Z` 发布，registry 的 `latest` 已指向 `0.2.0`；公开的 SHA-1 和 SHA-512 integrity 与最终发行 tarball 一致。
@@ -57,7 +87,7 @@
 
 ![npm 安装后的 v0.2.0、Running 状态与 registry 来源](evidence/harness-0.2.1-rc.2-npm.png)
 
-## 验证边界
+### 验证边界
 
 本次在 macOS 上验证了本机官方 0.2.1-rc.2 的安装、运行时、浏览器界面、配置持久化与真实打包流程。没有把这些结果记为 Windows 桌面版真机验收，也没有重新向 Cloudflare 上传网站或新建云资源。Windows / Linux 的 GitHub Actions 检查结果单独以远端实际运行记录为准。TUI、headless 交互提供方和模型驱动的公网部署未在本次重跑。
 

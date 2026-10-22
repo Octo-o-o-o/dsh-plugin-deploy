@@ -56,7 +56,7 @@ And it does not trade away safety for convenience: tokens never enter the conver
 
 ```sh
 # Install into your dsh profile (pnpm must be on PATH)
-npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.1
+npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.2
 
 # Boot
 npx @deepseek-ai/dsh@0.2.1-rc.2 web
@@ -72,7 +72,7 @@ That's it. **No account required the first time** — the plugin uses a Cloudfla
 > Requires [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0 locally (the version that supports temporary previews). If it is missing, the plugin tells you how to install it instead of failing silently.
 
 > [!TIP]
-> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.2.1`.
+> **Just published and not getting the new version?** pnpm's `minimumReleaseAge` supply-chain guard skips freshly published versions during a cooldown, so `add dsh-plugin-deploy` may resolve to the previous one. Pin it explicitly to get the latest right away: `add dsh-plugin-deploy@0.2.2`.
 
 ---
 
@@ -133,7 +133,7 @@ Checks, packing, and publishing skip package lifecycle scripts. Build your relea
 npm does **not** read tokens from environment variables. The plugin writes a temporary `.npmrc` containing only the reference `${DSH_NPM_TOKEN}`, passes the real value through the process environment, and deletes the file afterwards. **Your `~/.npmrc` is never touched and the token never lands on disk.**
 
 > [!TIP]
-> With 2FA enabled, an ordinary token stalls on the OTP prompt. Use a granular token with publish permissions and, when needed, "Bypass 2FA" — set a short expiry and revoke it when you are done. See [npm access tokens](https://docs.npmjs.com/about-access-tokens/).
+> This plugin publishes directly without an interactive OTP channel. It requires a **granular token** with publish permissions and **Bypass 2FA** enabled, permitted by the account, organization, and package policies. Use a short expiry and revoke it afterwards. If policy forbids bypassing 2FA, publish interactively in a terminal or use [npm's staged publishing workflow](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/#staged-publishing); this plugin does not support staging. See [npm's direct publishing requirements](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/#direct-publishing).
 
 ---
 
@@ -169,7 +169,11 @@ Open **Plugins → Installed → dsh-plugin-deploy**, then expand the **Cloudfla
 | npm token reference | default `NPM_TOKEN` | same |
 | Write token value (write-only) | paste the real token | the box clears on save and **never refills**; a pill on the right shows configured / not configured |
 
-Each token input has a collapsed setup guide with official links, creation steps, resource scope, permissions, and save instructions. Cloudflare supports the `Edit Cloudflare Workers` template restricted to the deployment account, or local `wrangler login`. For npm's current direct-publish flow, use a granular token with `Read and write (publish and stage)` permissions limited to the required packages/scopes and a short expiry. Enable Bypass 2FA only when policy allows unattended publishing; otherwise publish interactively in a terminal. Stage-only tokens require npm's staging workflow, which this plugin does not currently provide. See the [Cloudflare guide](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) and [npm guide](https://docs.npmjs.com/creating-and-viewing-access-tokens/).
+Each token input has a collapsed setup guide with official links, creation steps, resource scope, permissions, and save instructions.
+
+For Cloudflare's `Edit Cloudflare Workers` template, restrict Account Resources to the deployment account. If the project configures custom domain routes, restrict Zone Resources to those zones; otherwise remove Workers Routes write access. Remove unused KV, R2, Tail, and other service permissions and use a short expiry. An API token is recommended: local `wrangler login` credentials may be unreadable in the default `workspace-write` sandbox, so verify that the current permissions allow access before relying on that login. See the [Cloudflare guide](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) and [template defaults](https://developers.cloudflare.com/fundamentals/api/reference/template/).
+
+For npm, limit a granular token's `Read and write (publish and stage)` access to the required packages/scopes and use a short expiry. This plugin's noninteractive direct-publish mode **requires Bypass 2FA**, permitted by the account, organization, and package policies. If policy forbids bypassing 2FA, publish interactively in a terminal or use npm's official staging workflow. Stage-only tokens cannot complete the plugin's direct publish; the plugin does not support staging. See the [npm token guide](https://docs.npmjs.com/creating-and-viewing-access-tokens/) and [direct publishing requirements](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/#direct-publishing).
 
 Edits stay in the card until you press **Save**; **Discard** reverts to the last saved state. A card holding unsaved edits shows an "unsaved" badge beside its title even while collapsed.
 
@@ -238,7 +242,7 @@ No. Temp wrangler configs, tarballs, and npm cache all live in the system temp d
 <details>
 <summary><b>npm publish stalls on OTP.</b></summary>
 
-Your account has 2FA. Use a granular token with publish permissions and, when needed, "Bypass two-factor authentication". Prefer a short expiry and revoke after use.
+The plugin cannot accept an interactive OTP. Direct publishing requires a granular token with publish permissions and **Bypass two-factor authentication** enabled, permitted by the account, organization, and package policies. Prefer a short expiry and revoke after use. If policy forbids bypassing 2FA, publish interactively in a terminal or use npm's official staging workflow.
 </details>
 
 <details>
