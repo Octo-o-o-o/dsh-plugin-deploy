@@ -399,7 +399,7 @@ export async function runPublish(
     return fail({
       ...base,
       error: `未配置 npm token 引用 ${refName}。`,
-      hint: '在插件设置里写入 token（只存引用名；值走凭据服务）。请使用有发布权限的 granular token，按需配置 Bypass 2FA。',
+      hint: '在插件设置里写入 token（只存引用名；值走凭据服务）。本插件非交互式直接发布需要有发布权限且开启 Bypass 2FA 的 granular token；策略不允许时，请改用终端交互式发布或 npm 官方 staging 流程。',
     })
   }
 
@@ -496,7 +496,7 @@ export async function runPublish(
         return fail({
           ...base,
           error: 'npm 要求一次性密码（OTP / 2FA），非交互环境不能继续。',
-          hint: '请使用获准绕过 2FA 且有发布权限的 granular token；不要在对话或工具参数里粘贴 token。',
+          hint: '本插件非交互式直接发布需要有发布权限且开启 Bypass 2FA 的 granular token；策略不允许时，请改用终端交互式发布或 npm 官方 staging 流程。不要在对话或工具参数里粘贴 token。',
           stdout: publishedText,
           ...published.exitCode === null ? {} : { exitCode: published.exitCode },
         })

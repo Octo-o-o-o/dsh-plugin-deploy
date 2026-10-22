@@ -72,13 +72,13 @@ AI 帮你写完了一个网站、一个 Worker、一个插件——然后卡在�
 
 ```sh
 # 装进你的 dsh profile（需要 pnpm 在 PATH 上）
-npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.1
+npx @deepseek-ai/dsh@0.2.1-rc.2 plugin --profile web add dsh-plugin-deploy@0.2.2
 
 # 启动
 npx @deepseek-ai/dsh@0.2.1-rc.2 web
 ```
 
-桌面版可在插件市场更新，或使用**桌面版附带的** CLI：`dsh plugin --profile desktop add dsh-plugin-deploy@0.2.1`。先确认 `dsh --version`；PATH 中的旧 CLI 可能与桌面版不同。
+桌面版可在插件市场更新，或使用**桌面版附带的** CLI：`dsh plugin --profile desktop add dsh-plugin-deploy@0.2.2`。先确认 `dsh --version`；PATH 中的旧 CLI 可能与桌面版不同。
 
 然后在对话里说：
 
@@ -90,7 +90,7 @@ npx @deepseek-ai/dsh@0.2.1-rc.2 web
 > 需要本机装了 [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) ≥ 4.102.0（临时预览要求）。没装的话插件会告诉你怎么装，不会闷头失败。
 
 > [!TIP]
-> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.2.1`。
+> **刚发布的新版本装不到？** pnpm 有 `minimumReleaseAge` 供应链保护，新版本在冷却期内不会被自动选中——`add dsh-plugin-deploy` 可能装到上一个版本。想立刻用最新版就显式指定：`add dsh-plugin-deploy@0.2.2`。
 
 ---
 
@@ -173,7 +173,7 @@ Agent：[9 条校验全过] → [审批：即将发布 xxx@0.1.0 到公共仓库
 npm 的 token 处理和别的工具不同——它**不读环境变量**。插件的做法是：临时 `.npmrc` 里只写 `${DSH_NPM_TOKEN}` 这个引用，真值经进程环境传给 npm，用完删除。**不碰你的 `~/.npmrc`，token 不落盘。**
 
 > [!TIP]
-> 如果你的 npm 账号开了 2FA，普通 token 会卡在 OTP 提示上。用具有发布权限、按需勾选 "Bypass 2FA" 的 **granular token**，并建议设短过期、发完就撤销。参见 [npm token 官方说明](https://docs.npmjs.com/about-access-tokens/)。
+> 本插件非交互式直接发布需要具有发布权限且开启 **Bypass 2FA** 的 **granular token**，并须符合账号、组织和包的策略。设置较短有效期，用完撤销；策略禁止绕过二次验证时，改用终端交互式发布或 [npm 官方 staging 流程](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/#staged-publishing)，当前插件不支持 staging。参见 [npm 直接发布要求](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/#direct-publishing)。
 
 ---
 
@@ -218,9 +218,9 @@ npm 的 token 处理和别的工具不同——它**不读环境变量**。插�
 
 在两个「写入 token」输入框下，可以展开「如何获取 Cloudflare token / npm token」：页面直接提供官方入口、创建步骤、资源范围、发布权限与保存方法。说明默认折叠，已配置用户可直接使用原来的表单。
 
-Cloudflare 可使用 `Edit Cloudflare Workers` 模板创建 token，并把账号资源限定到部署使用的账号；也可以在本机终端用 `wrangler login` 走 OAuth。参见 [Cloudflare 创建说明](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/)。
+Cloudflare 可使用 `Edit Cloudflare Workers` 模板创建 token。把 Account Resources 限定到部署使用的账号；配置了自定义域名路由时，把 Zone Resources 限定到对应站点，不需要路由时移除 Workers Routes 写权限。按项目实际使用的服务移除未使用的 KV、R2、Tail 等权限，并设置较短有效期。推荐配置 API token；本机终端的 `wrangler login` 登录状态在默认 `workspace-write` 沙箱中可能无法读取，使用前需确认当前权限允许访问登录状态。参见 [Cloudflare 创建说明](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/)和[模板默认权限](https://developers.cloudflare.com/fundamentals/api/reference/template/)。
 
-npm 当前的直接发布流程需要 granular token 的 `Read and write (publish and stage)` 权限。按包或作用域限制访问，设置较短有效期；仅在策略允许且需要免交互发布时开启 Bypass 2FA。组织要求每次二次验证时，改用终端交互式发布。`stage only` token 需使用 npm 的 staging 流程，当前插件尚未提供该流程。参见 [npm 创建说明](https://docs.npmjs.com/creating-and-viewing-access-tokens/)。
+npm token 需要 `Read and write (publish and stage)` 权限，访问范围限定到目标包或作用域。本插件以非交互方式直接发布，因此必须开启 **Bypass 2FA**，且账号、组织和包的策略允许使用此类 token。若策略禁止绕过二次验证，改用终端交互式发布或 npm 官方 staging 流程。`stage only` token 无法用于本插件的直接发布；当前插件尚未提供 staging 流程。参见 [npm 创建说明](https://docs.npmjs.com/creating-and-viewing-access-tokens/)和[直接发布要求](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/#direct-publishing)。
 
 ---
 
@@ -289,7 +289,7 @@ npm 当前的直接发布流程需要 granular token 的 `Read and write (publis
 <details>
 <summary><b>发布到 npm 卡在 OTP？</b></summary>
 
-你的账号开了 2FA。使用有发布权限的 granular token，并按需勾选 "Bypass two-factor authentication"。建议配短过期时间，发完就撤销。
+本插件不能交互输入 OTP。直接发布需要有发布权限且开启 **Bypass two-factor authentication** 的 granular token，并须符合账号、组织和包的策略。建议设置较短有效期，发完撤销。策略禁止时，改用终端交互式发布或 npm 官方 staging 流程。
 </details>
 
 <details>
