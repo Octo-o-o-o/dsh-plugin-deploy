@@ -10,20 +10,38 @@
 
 原有 107 项测试通过，但把旧产物导入真实新版运行时会失败：`dsh-settings` 已不再导出 `installSettingsSection`。因此单纯扩展 peer 范围不足以修复。
 
-## 0.2.2 候选修订与复验（2026-10-22）
+## 0.2.2 修订与发行复验（2026-10-22）
 
-**状态：候选版本，尚未发布到 npm。当前正式版仍是 0.2.1。**
+**状态：已发布到 npm，`latest` 为 0.2.2；实际 desktop profile 已升级并完成配置说明和部署入口验收。**
 
 - 核实 [PR #3 的评审反馈](https://github.com/Octo-o-o-o/dsh-plugin-deploy/pull/3#discussion_r4333240286)：设置说明、中英文 README 和 npm 发布失败提示均明确，本插件的非交互式直接发布需要有发布权限且开启 Bypass 2FA 的 granular token，并须符合账号、组织和包的策略。禁止使用此类 token 时，改用终端交互式发布或 npm 官方 staging 流程；插件尚未实现 staging。依据 [npm 直接发布要求](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/#direct-publishing)。
 - Cloudflare 说明补上 Zone Resources 范围：有路由时限制到对应站点，无路由时移除 Workers Routes 写权限；移除未使用的 KV、R2、Tail 等权限。依据 [Cloudflare 模板默认权限](https://developers.cloudflare.com/fundamentals/api/reference/template/)。同时说明默认 `workspace-write` 沙箱可能读不到本机 Wrangler 登录状态，推荐配置 API token。
 - 本机 Node 22 的 118/118 项测试、TypeScript 检查、插件全量扫描和 `git diff --check` 均通过。此次只修改说明和失败提示，没有增加权限或修改发布执行方式。
 - 用本机官方 **Harness 0.2.1-rc.2** 自带 CLI，在独立 `DSH_HOME` 中从最终候选 tarball 安装到全新 web profile；`--dump-config` 包含本 bundle，实际启动后显示 **v0.2.2 / 1 running**。
-- 浏览器中分别展开两个说明，新增权限限制、沙箱限制、Bypass 2FA 要求和替代流程均完整显示，官方链接可见；保存按钮保持禁用。浏览器没有捕获到 warning / error，也没有 `loaded without registering` 或 slot 声明错误。未修改实际 desktop profile 或用户凭据。
-- 对用户再次提到的 #1，另用全新 profile 复验原始的不指定版本安装方式 `dsh plugin --profile <测试 profile> add dsh-plugin-deploy`：成功解析并安装官方 npm **0.2.1**，没有版本不兼容拒绝；registry 的 `latest` 也是 `0.2.1`。这证明当前 macOS 上的默认安装已恢复，不冒充 Windows 桌面版真机验收。#1 在 2026-10-21 已有维护者说明并关闭。
+- 候选阶段在浏览器中分别展开两个说明，新增权限限制、沙箱限制、Bypass 2FA 要求和替代流程均完整显示，官方链接可见；保存按钮保持禁用。浏览器没有捕获到 warning / error，也没有 `loaded without registering` 或 slot 声明错误。该阶段未修改实际 desktop profile 或用户凭据。
+- 发行前对用户再次提到的 #1，另用全新 profile 复验原始的不指定版本安装方式 `dsh plugin --profile <测试 profile> add dsh-plugin-deploy`：当时成功解析并安装官方 npm **0.2.1**，没有版本不兼容拒绝，当时 registry 的 `latest` 为 `0.2.1`。这证明该次 macOS 默认安装已恢复，不冒充 Windows 桌面版真机验收。#1 在 2026-10-21 已有维护者说明并关闭。
 
 ![0.2.2 候选版的 Cloudflare 权限范围与 Wrangler 沙箱说明](evidence/deploy-0.2.2-candidate-cloudflare-guide.png)
 
 ![0.2.2 候选版的 npm 直接发布 token 要求](evidence/deploy-0.2.2-candidate-npm-guide.png)
+
+### 正式发行与实际桌面版
+
+- [PR #4](https://github.com/Octo-o-o-o/dsh-plugin-deploy/pull/4) 已合并，合并提交 `6216049ec5a07fcf5b4837f38a6ea1e324e417bb`，代码源提交 `3815da68f671c308d90a0dc54cbf9a36df90845e`。[CI 39746676735](https://github.com/Octo-o-o-o/dsh-plugin-deploy/actions/runs/39746676735) 在 Ubuntu / Node 22 和 Windows / Node 24 均通过，包含类型检查、每组 118 项测试和插件扫描。
+- [npm 0.2.2](https://www.npmjs.com/package/dsh-plugin-deploy/v/0.2.2) 于 `2026-10-22T09:00:15.921Z`（台北时间 17:00）发布，公开 registry 的 `latest` 已更新为 `0.2.2`。SHA-1 为 `0956b0a544ff230067a5e77e016ade91d94d5cbc`，SHA-1 和 SHA-512 integrity 均匹配已验证的发行 tarball；其中 7 个文件与合并的代码一致。
+- 在退出官方 Harness **0.2.1-rc.2** 桌面版、备份实际 desktop profile 后，使用该桌面版自带 CLI 执行 `dsh plugin --profile desktop add dsh-plugin-deploy@0.2.2 --registry=https://registry.npmjs.org`。从官方 npm 下载并安装成功，profile 依赖为精确版本 `0.2.2`，7 个安装文件逐字节匹配发行 tarball。未使用 Harness 兼容性豁免；pnpm 为此次明确指定的新版本添加了单独的冷却期排除项，保留整体供应链策略。
+- 重启实际桌面版后，插件详情显示 **v0.2.2 / 共 1 个 · 1 运行中**，来源是 **dsh-plugin-deploy@0.2.2**。Cloudflare 和 npm 两份说明均能展开并完整显示步骤、权限限制、沙箱限制和官方链接；查看后保存按钮保持禁用。
+- 在插件项目的空白会话中，输入 `/deploy` 和 `/publish-plugin` 均显示对应指令与正确说明；已有会话的「部署或检查发布」菜单可展开，包含「部署到 Cloudflare」与「检查插件发布」。验证草稿已清空，没有提交部署或发布指令。
+- 安装及重启后，profile patch、已有插件 bundle 和凭据文件与安装前保持一致。保留 0.2.1 发行包和 profile 备份用于恢复。此次真机验收覆盖 macOS 桌面安装、运行、配置说明和入口；没有新建 Cloudflare 云资源，也未将其记为 Windows 桌面 UI 或插件内 npm 发布流程验收。
+- PR #3 中对应的 4 条评审反馈已逐条回复并标记为已解决；PR #4 没有未解决的评审线程。
+
+![实际桌面版显示 npm 正式版 0.2.2 与运行状态](evidence/deploy-0.2.2-desktop-npm-source.png)
+
+![实际桌面版中的 Cloudflare 配置说明](evidence/deploy-0.2.2-desktop-cloudflare-guide.png)
+
+![实际桌面版中的 npm 配置说明](evidence/deploy-0.2.2-desktop-npm-guide.png)
+
+![实际桌面版中的 deploy 指令入口](evidence/deploy-0.2.2-desktop-deploy-command.png)
 
 ## 0.2.1 发行与桌面版复验（2026-10-21）
 
